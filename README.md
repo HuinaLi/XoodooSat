@@ -25,7 +25,7 @@ sudo ldconfig
 
 **2. Install pysat**
 
-We use [pysat](https://github.com/pysathq/pysat) to generate the **cnf file** for cardinality constraint, which is used to bound the weight of the trail. A cardinality constraint is a constraint of the form: $$\sum_{i=1}^n{x_i}\leq k$$. Cardinality constraints are ubiquitous in practical problem formulations.
+We use [pysat](https://github.com/pysathq/pysat) to generate the **cnf file** for cardinality constraint, which is used to bound the weight of the trail. A cardinality constraint is a constraint of the form: $$\sum_{i=1}^n{x_i}\leq k$$ Cardinality constraints are ubiquitous in practical problem formulations.
 
 ```
 pip3 install python-sat
@@ -57,10 +57,10 @@ An example(3 rounds, max weight 25):
 
 Note that:
 ```
-3 round: a_0 -> b_0 -> a_1 -> b_1 -> a_2 -> b_2 -> a_3, b_i=lambda(a_i), a_i+1=chi(b_i)$
-3 round trail core: a_1 -> b_1 -> a_2 -> b_2
-state to sum weight: a_1, a_2, b_2 (a_1, a_2,..., a_n-1, b_n-1)
-so 3 round weight = w(a_1)+w(a_2)+w(b_2)
+3 round: $$a_0 -> b_0 -> a_1 -> b_1 -> a_2 -> b_2 -> a_3, b_i=lambda(a_i), a_i+1=chi(b_i)$$
+3 round trail core: $$a_1 -> b_1 -> a_2 -> b_2$$
+state to sum weight: $$a_1, a_2, b_2 (a_1, a_2,..., a_n-1, b_n-1)$$
+so 3 round $$weight = w(a_1)+w(a_2)+w(b_2)$$
 ```
 
 Finally, the result is output in result folder.
