@@ -1,0 +1,5 @@
+.git/
+result/
+obj/
+CNF*.txt
+xoodoo
