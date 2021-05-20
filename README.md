@@ -26,7 +26,7 @@ sudo ldconfig
 **2. Install pysat**
 
 We use [pysat](https://github.com/pysathq/pysat) to generate the **cnf file** for cardinality constraint, which is used to bound the weight of the trail.
-A cardinality constraint is a constraint of the form: $$\sum_{i=1}^n{x_i}\leq k$$ Cardinality constraints are ubiquitous in practical problem formulations.
+A cardinality constraint is a constraint of the form: $$\sum_{i=1}^n{x_i}\leq k, x_i={0,1}$$ Here n is the number of variables.
 
 ```
 pip3 install python-sat

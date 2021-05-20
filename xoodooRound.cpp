@@ -113,19 +113,6 @@ tXoodooState XoodooRound::lambda(tXoodooState A) {
     return A;
 }
 
-State XoodooRound::extendChi(State Bi) {
-    tXoodooState temp(X*Y,0);
-    State2XooState(Bi,temp);
-    for(uint64_t i=0; i<10000000; i++) {
-        for(int j=1; j<X*Y; j++) temp[j] = temp[j-1];
-        temp = lambda(temp);
-        int ttt_weight = caculateXooStateWeight(temp);
-        if(ttt_weight + 10 > 100) temp[0] = 1;
-    }
-
-    return Bi;
-}
-
 void XoodooRound::Bit2XooState(const Bitmap &A, tXoodooState &B) {//32*(4y+x) + z
     B.assign(X*Y, 0);
     unsigned int x, y, z;
@@ -486,9 +473,7 @@ void XoodooRound::solve_and_output(const string pathname) {
         }
         
         //now extend result
-        //if(round_num == 2) {
-        //    States extendBi(solution[1]
-        //}
+        //TODO
 
         //writing final result
         if(round_num > 2) write_result(pathname,weight,solution_counts[weight],solution);
@@ -574,26 +559,25 @@ void XoodooRound::check_trails(const string pathname, int i, int mode) {
     int res_size = (mode == 0)? AS_state_num:AS_state_num-1;
     int print_size = AS_state_num;
     
-    int k = (mode == 0)? 0:1;
-    for(; read2States(res,infile,mode) && k<=i; k++) {
+    for(int k=0; read2States(res,infile,mode) && k<=i; k++) {
         if(res.size() != res_size) {
             cout<<"wrong size: "<<res.size()<<endl;
             return;
         }
         if(k<i) continue;
-        cout<<"\na round"<<endl;
+        cout<<"\ncheck "<<i<<endl;
         vector<tXoodooState> res_xoo;
-        for(int i=0; i<res.size(); i++) {
+        for(int m=0; m<res.size(); m++) {
             tXoodooState tmp;
-            State2XooState(res[i],tmp);
+            State2XooState(res[m],tmp);
             res_xoo.push_back(tmp);
         }
-        for(int i=0; i<print_size-1; i++) {
-            tXoodooState tmp = lambda(res_xoo[i]);
-            cout<<"a"<<i+1<<":"<<endl;
-            displayXooState(cout,res_xoo[i]);
+        for(int m=0; m<print_size-1; m++) {
+            tXoodooState tmp = lambda(res_xoo[m]);
+            cout<<"a"<<m+1<<":"<<endl;
+            displayXooState(cout,res_xoo[m]);
             cout<<endl;
-            cout<<"b"<<i+1<<":"<<endl;
+            cout<<"b"<<m+1<<":"<<endl;
             displayXooState(cout,tmp);
             cout<<endl;
         }
@@ -607,54 +591,45 @@ void XoodooRound::check_trails(const string pathname, int i, int mode) {
     infile.close();
 }
 
-vector<vector<int>> XoodooRound::compare_trails(const string path_res, const string path_DC) {
-    ifstream in_res(path_res.data(), ios::in), in_DC(path_DC.data(), ios::in);
-    States res, DC;
-    int DC_solution_num = 0;
-    while(read2States(DC,in_DC,1)) DC_solution_num++;
-    in_DC.close();
+vector<vector<int>> XoodooRound::compare_trails(const string path_res1, int mode1, const string path_res2, int mode2) {
+    ifstream in_res1(path_res1.data(), ios::in), in_res2(path_res2.data(), ios::in);
+    States res1, res2;
+    int res2_solution_num = 0;
+    while(read2States(res2,in_res2,mode2)) res2_solution_num++;
+    in_res2.close();
 
     map<int,int> same_solution, inverse_same_solution;
-    for(int k=1; k<=DC_solution_num; k++) inverse_same_solution[k] = -1;
+    for(int k=0; k<res2_solution_num; k++) inverse_same_solution[k] = -1;
     vector<vector<int>> output(2);
 
-    for(int i=0; read2States(res,in_res,0); i++) {
-        in_DC.open(path_DC.data(), ios::in);
-        for(int j=1; read2States(DC,in_DC,1); j++) {
+    for(int i=0; read2States(res1,in_res1,mode1); i++) {
+        in_res2.open(path_res2.data(), ios::in);
+        for(int j=0; read2States(res2,in_res2,mode2); j++) {
             bool equal = true;
-            auto dx_dz = genSmallestState(DC[0]);
-            for(int k=0; k<DC.size(); k++) equal &= (res[k] == ShiftXZ(dx_dz,DC[k]));
+            auto dx_dz1 = genSmallestState(res1[0]);
+            auto dx_dz2 = genSmallestState(res2[0]);
+            for(int k=0; k < min(res1.size(),res2.size()); k++) equal &= (ShiftXZ(dx_dz1,res1[k]) == ShiftXZ(dx_dz2,res2[k]));
             same_solution[i] = -1;
             if(equal) {
                 same_solution[i] = j;
                 inverse_same_solution[j] = i;
-                cout<<i<<" solution equal to the "<<j<<" trail in DC"<<endl;
+                cout<<i<<" in "+path_res1<<" trail equal to the "<<j<<" trail in "+path_res2<<endl;
                 break;
             }
         }
-        if(same_solution[i] == -1) {
-            for (int i=0; i<res.size()-1; i++) {
-                cout<<"a"<< i+1 <<":"<<endl;
-                display(cout,res[i]);
-                cout<<endl;
-            }
-            cout<<"b"<< res.size()-1 <<":"<<endl;
-            display(cout,res[res.size()-1]);
-            cout<<"\n"<<endl;
-        }
-        in_DC.close();
+        in_res2.close();
     }
-    in_res.close();
+    in_res1.close();
 
     for(auto it=same_solution.begin(); it!=same_solution.end(); it++) {
         if(it->second == -1) {
-            cout<<it->first<<" solution not found equal"<<endl;
+            cout<<it->first<<" trail in "+path_res1+" not found equal"<<endl;
             output[0].push_back(it->first);
         }
     }
     for(auto it=inverse_same_solution.begin(); it!=inverse_same_solution.end(); it++) {
         if(it->second == -1) {
-            cout<<it->first<<" DC not found equal"<<endl;
+            cout<<it->first<<" trail in "+path_res2+" not found equal"<<endl;
             output[1].push_back(it->first);
         }
     }
@@ -685,34 +660,20 @@ void XoodooRound::gen_obj_T(vector<vector<int>> &obj) {
 }
 
 
-/**
+/*
  a0 -> b0 -> a1 -> b1 -> a2 -> b2 -> a3
  */
 void XoodooRound::XoodooRound_AS() {
-    time_point<system_clock> start = system_clock::now();
-    auto st = system_clock::to_time_t(start);
-    struct tm* stm = localtime(&st);
-    cout<<stm->tm_mon + 1<<" "<<stm->tm_mday<<" "<<stm->tm_hour<<":"<<stm->tm_min<<":"<<stm->tm_sec<<endl;
-
-    ofstream out;
-    string res_prefix = objFilePath+"result";
-    vector<string> mode = {"<=", ">=", "="};//atmost, atleast, euqals
-    string res_filepath = objFilePath+"result/xoodoo_result_"+to_string(round_num)+"R_#AS"+mode[AS_mode]+to_string(AS_weight_num)+".txt";
-    if(access(res_prefix.data(), F_OK) == -1) {//check if result dir is existed
-        mkdir(res_prefix.data(), S_IRWXO|S_IRWXG|S_IRWXU);
-    }
-    out.open(res_filepath, ios::ate);//clear result txt first
-    out.close();
-    
     map<unsigned int, unsigned int> RhoE_Relation, inverse_RhoE_Relation;
     gen_RhoE_T(RhoE_Relation,inverse_RhoE_Relation); // {i,j} {false}
     map<unsigned int, unsigned int> RhoW_Relation;
     gen_RhoW_T(RhoW_Relation); // {i,j} {false}
     vector<vector<unsigned int>> Theta_Relation = {};
     gen_Theta_T(Theta_Relation);
-    cout<<"size: "<<RhoE_Relation.size()<<" "<<inverse_RhoE_Relation.size()<<" "<<RhoW_Relation.size()<<" "<<Theta_Relation.size()<<endl;
+    cout<<"rhoE,inverse_rhoE,rhoW size: "<<RhoE_Relation.size()<<" "<<inverse_RhoE_Relation.size()<<" "<<RhoW_Relation.size()<<" "<<Theta_Relation.size()<<endl;
 
     //linear layer
+    //a1->b1, a2->b2, ...
     cout<< "start add linear" <<endl;
     for (int round=0; round<round_num-1; round++) {
         for (int i=0; i<var_num; i++) {
@@ -729,16 +690,15 @@ void XoodooRound::XoodooRound_AS() {
     RhoE_Relation.clear();
     inverse_RhoE_Relation.clear();
     RhoW_Relation.clear();
-
     
-    /*chi
-      generate bi --> a_i+1
+    /*
+    chi
+    generate bi --> a_i+1
     */
     vector<vector<string>> Chi_Relation;
     gen_xoodoo_Chi_cnf(Chi_Relation);
-    
-    cout<< "start add chi" <<endl;
     //b1->a2
+    cout<< "start add chi" <<endl;
     for (int round=0; round<round_num-2; round++) {
         for (int x=0; x<X; x++) {
            for (int z=0; z<Z; z++) {
@@ -772,11 +732,9 @@ void XoodooRound::XoodooRound_AS() {
         }
     }
     Chi_Relation.clear();
-
     
     vector<vector<string>> AS_Relation;
     gen_xoodoo_AS_cnf(AS_Relation);
-    
     cout<< "start add AS" <<endl;
     //a1, a2, b2, ...
     for (int x=0; x<X; x++) {
@@ -787,7 +745,7 @@ void XoodooRound::XoodooRound_AS() {
                 for (int ithVar=0; ithVar<Y; ithVar++) {
                     if (AS_Relation[ithClause][ithVar] != "0") {
                         for(int i=0; i<AS_state_num; i++) {
-                            int offset = i*round_var_num;
+                            int offset = i*round_var_num;//a1, a2, b2, ...
                             if(i == AS_state_num-1) offset -= var_num;
                             if (AS_Relation[ithClause][ithVar] == "T") {
                                 clause[i].push_back(Lit((ithVar*X*Z + z + Z*x + offset), true));
@@ -801,7 +759,7 @@ void XoodooRound::XoodooRound_AS() {
                 
                 if (AS_Relation[ithClause][Y] != "0") {
                     for(int i=0; i<AS_state_num; i++) {
-                        int offset = i*AS_node_var_num;
+                        int offset = i*AS_node_var_num;//AS_a1, AS_a2, AS_b2, ...
                         if (AS_Relation[ithClause][Y] == "T") {
                             clause[i].push_back(Lit((var_num*core_state_num + z + Z*x + offset), true));
                         }
@@ -821,8 +779,7 @@ void XoodooRound::XoodooRound_AS() {
 
     vector<vector<int>> obj;
     gen_obj_T(obj);
-   
-    //AS_b0b1b2
+    //AS_a1a2b2
     cout<< "start add AS obj" <<endl;
     for (int ithClause=0; ithClause< obj.size(); ithClause++) {
         vector<Lit> clause; //one of the 10 clauses of a colliding Sbox
@@ -840,27 +797,44 @@ void XoodooRound::XoodooRound_AS() {
         clause.clear();
     }
     obj.clear();
-    
-    //solve phase
-    solve_and_output(res_filepath);
 }
 
-
-/*  //test code for extendChi
+void XoodooRound::main() {
+    //print date and time
     time_point<system_clock> start = system_clock::now();
-    tXoodooState ttt(X*Y,0);
-    for(int i=0; i<X*Y; i++) ttt[i] = i+5;
-    for(uint64_t i=0; i<10000000; i++) {
-        for(int j=1; j<X*Y; j++) ttt[j] = ttt[j-1];
-        ttt = lambda(ttt);
-        int ttt_weight = caculateXooStateWeight(ttt);
-        if(ttt_weight + 10 > 100) ttt[0] = 1;
-    }
-    time_point<system_clock> end = system_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    cout << "Elapsed time: " << elapsed.count() << "s" <<endl;
-
     auto st = system_clock::to_time_t(start);
     struct tm* stm = localtime(&st);
     cout<<stm->tm_mon + 1<<" "<<stm->tm_mday<<" "<<stm->tm_hour<<":"<<stm->tm_min<<":"<<stm->tm_sec<<endl;
-*/
+    
+    //round function, generate clauses for solver
+    XoodooRound_AS();
+
+    //mkdir result and the empty result file
+    ofstream out;
+    string res_prefix = objFilePath+"result/";
+    if(access(res_prefix.data(), F_OK) == -1) {//check if result dir is existed
+        mkdir(res_prefix.data(), S_IRWXO|S_IRWXG|S_IRWXU);
+    }
+
+    vector<string> mode = {"<=", ">=", "="};//atmost, atleast, euqals
+    string res_filepath = res_prefix+"xoodoo_result_"+to_string(round_num)+"R_#AS"+mode[AS_mode]+to_string(AS_weight_num)+".txt";
+    out.open(res_filepath, ios::ate);//clear result txt first
+    out.close();
+
+    //ban previous solution and solve phase
+    cout<<"start banning found trails with weight"+mode[AS_mode]<<AS_weight_num<<endl;
+    string ban_pre_path = objFilePath+"found"+mode[AS_mode]+to_string(AS_weight_num)+".txt";
+    ifstream in_ban_pre(ban_pre_path.data(), ios::in);
+    States ban_pre;
+    while(read2States(ban_pre,in_ban_pre,0)) {
+        map<State,int> banned;
+        for(int i=0; i<ban_pre.size()-1; i++) {
+           banned[ban_pre[i]] = i*round_var_num;
+        }
+        ban_solution(banned);
+    }
+    in_ban_pre.close();
+    
+    cout<<"start solving"<<endl;
+    solve_and_output(res_filepath);
+}

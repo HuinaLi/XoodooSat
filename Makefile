@@ -1,6 +1,4 @@
 EXTENSION = cpp
-HEADER = h
-
 CC = g++
 
 EXE = xoodoo
@@ -9,14 +7,14 @@ INCLUDE = -I .
 
 LDFLAGS = -lcryptominisat5 -lm4ri
 CFLAGS = -O3 -DLARGEMEM=ON -std=c++0x
-CFLAGS += -g
+# CFLAGS += -g
 
 CXX_SOURCES = $(wildcard *.$(EXTENSION))
-CXX_HEADERS = $((wildcard *.$(HEADER))
 CXX_OBJECTS = $(patsubst  %.$(EXTENSION), $(OBJ)/%.o, $(CXX_SOURCES))
-CNF = $(wildcard CNF*.txt)
+CXX_INCLUDES = $(CXX_OBJECTS:.o=.d)
+CNF = $(wildcard CNF*AS*.txt)
 
-.PHONY: XoodooSAT
+.PHONY: all clean
 all: $(OBJ) $(EXE)
 
 $(OBJ):
@@ -25,7 +23,7 @@ $(OBJ):
 $(EXE): $(OBJ) $(CXX_OBJECTS)
 	$(CC) $(CXX_OBJECTS) -o $(EXE) $(LDFLAGS) $(CFLAGS)
 
--include $(OBJ)/$(CXX_OBJECTS:.o=.d)
+-include $(CXX_INCLUDES)
 
 $(OBJ)/%.o: %.cpp
 	$(CC) $(INCLUDE) -c $(CFLAGS) $< -o $(OBJ)/$*.o
@@ -37,9 +35,9 @@ $(OBJ)/%.o: %.cpp
 	@rm -f $(OBJ)/$*.d.tmp
 
 clean:
-	rm -rf $(CXX_OBJECTS) $(EXE)
+	rm -rf $(CXX_OBJECTS) $(CXX_INCLUDES) $(EXE)
     ifneq ($(CNF),)
-		rm $(CNF)
+		rm CNF*AS*.txt
     else
 		@echo no CNF file is generated
     endif
