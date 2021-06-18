@@ -59,9 +59,10 @@ An example(3 rounds, max weight 25):
 Note that:
 
 3 round trail:
-$$a_0 \to b_0 \to a_1 \to b_1 \to a_2 \to b_2 \to a_3, b_i=\lambda(a_i), a_{i+1}=\chi(b_i)$$
+$$a_0 \stackrel{\lambda}\to b_0 \stackrel{\chi}\to a_1 \stackrel{\lambda}\to b_1 \stackrel{\chi}\to a_2 \stackrel{\lambda}\to b_2 \stackrel{\chi}\to a_3$$
+$$b_i=\lambda(a_i), a_{i+1}=\chi(b_i)$$
 3 round trail core:
-$$a_1 \to b_1 \to a_2 \to b_2$$
+$$a_1 \stackrel{\lambda}\to b_1 \stackrel{\chi}\to a_2 \stackrel{\lambda}\to b_2$$
 states to sum weight:
 $$a_1, a_2,..., a_{n-1}, b_{n-1}$$
 3 round weight:
