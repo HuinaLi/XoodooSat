@@ -68,16 +68,9 @@ Example:
 
 Note that:
 
-3 round trail:
-$$a_0 \stackrel{\lambda}\to b_0 \stackrel{\chi}\to a_1 \stackrel{\lambda}\to b_1 \stackrel{\chi}\to a_2 \stackrel{\lambda}\to b_2 \stackrel{\chi}\to a_3$$
-$$b_i=\lambda(a_i), a_{i+1}=\chi(b_i)$$
-3 round trail core:
-$$a_1 \stackrel{\lambda}\to b_1 \stackrel{\chi}\to a_2 \stackrel{\lambda}\to b_2$$
-states to sum weight:
-$$a_1, a_2,..., a_{n-1}, b_{n-1}$$
-3 round weight:
-$$W = w(a_1)+w(a_2)+w(b_2)$$
-
+<div style="text-align:center", align=center>
+< img src="./xoodoo.png" />
+</div>
 
 Finally, the result is output in result folder.
 
