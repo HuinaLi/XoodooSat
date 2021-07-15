@@ -88,6 +88,8 @@ int main(int argc, char* argv[]) {
     //xoo.check_trails("./extra_trails.txt",1,0);
     //xoo.check_trails("./test.txt",70,0);
     xoo.main();
+    //xoo.extend_main(true);
+    //xoo.extend_main(false);
 
     return 0;
 }

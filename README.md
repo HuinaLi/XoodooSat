@@ -48,12 +48,22 @@ Run:
 
 ```
 ./xoodoo -h
+Options:
+ -r, --round round_num      How many rounds to trail (default 4).
+ -w, --weight weight        The weight to bound for the trail (default 27).
+ -t, --thread thread        The number of threads for the process (default 16).
+ -m, --mode mode            The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
+                            See pysat_card_AS.py for more information.
+ -h, --help                 Help information.
 ```
 you can see the optional parameters like round number(how many rounds to analysis), weight, etc.
 
-An example(3 rounds, max weight 25):
+Example:
 ```
+# weight<=25, 3 rounds, 16 threads
 ./xoodoo -r 3 -w 25 -t 16 -m 0
+# weight=25, 3 rounds, 16 threads
+./xoodoo -r 3 -w 25 -t 16 -m 2
 ```
 
 Note that:
@@ -70,3 +80,10 @@ $$W = w(a_1)+w(a_2)+w(b_2)$$
 
 
 Finally, the result is output in result folder.
+
+## Results
+Synchronously running weight=25 and weight<=25(3 rounds), we took about one month to find 122 trails, with 2 new trails found compared to [Joan Daemen's work](https://tosc.iacr.org/index.php/ToSC/article/view/7359).
+```
+./xoodoo -r 3 -w 25 -t 16 -m 0
+./xoodoo -r 3 -w 25 -t 16 -m 2
+```
