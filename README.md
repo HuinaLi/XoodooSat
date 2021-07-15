@@ -50,13 +50,17 @@ Run:
 ./xoodoo -h
 Options:
  -r, --round round_num      How many rounds to trail (default 3).
- -w, --weight weight        The weight to bound for the trail (default 25)，but the weight is the number of active S-box（AS）, the true weight is 2AS.
+ -w, --weight weight        The weight to bound for the trail (default 25).
  -t, --thread thread        The number of threads for the process (default 16).
  -m, --mode mode            The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
                             See pysat_card_AS.py for more information.
  -h, --help                 Help information.
 ```
-you can see the optional parameters like round number(how many rounds to analysis), weight, etc.
+Note that:
+the weight in here is actually the number of active columns.  So after get the result of 3-round trails, we can replace the weight by the number of active columns.
+
+
+ou can see the optional parameters like round number(how many rounds to analysis), weight, etc.
 
 Example:
 ```
