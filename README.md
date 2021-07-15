@@ -68,9 +68,7 @@ Example:
 
 Note that:
 
-<div style="text-align:center", align=center>
-< img src="./xoodoo.png" />
-</div>
+!avatar[./xoodoo.png]
 
 Finally, the result is output in result folder.
 
