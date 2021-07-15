@@ -49,8 +49,8 @@ Run:
 ```
 ./xoodoo -h
 Options:
- -r, --round round_num      How many rounds to trail (default 4).
- -w, --weight weight        The weight to bound for the trail (default 27).
+ -r, --round round_num      How many rounds to trail (default 3).
+ -w, --weight weight        The weight to bound for the trail (default 25).
  -t, --thread thread        The number of threads for the process (default 16).
  -m, --mode mode            The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
                             See pysat_card_AS.py for more information.
