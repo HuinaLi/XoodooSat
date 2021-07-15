@@ -12,8 +12,8 @@ using XOODOOSAT::XoodooRound;
 void show_usage(char* cmd) {
     cout << cmd << " [Options]" <<endl;
     cout << "Options:" << endl;
-    cout << " -r, --round round_num      How many rounds to trail (default 4)." << endl;
-    cout << " -w, --weight weight        The weight to bound for the trail (default 27)." << endl;
+    cout << " -r, --round round_num      How many rounds to trail (default 3)." << endl;
+    cout << " -w, --weight weight        The weight to bound for the trail (default 25)." << endl;
     cout << " -t, --thread thread        The number of threads for the process (default 16)." << endl;
     cout << " -m, --mode mode            The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals." << endl;
     cout << "                            See pysat_card_AS.py for more information." << endl;
@@ -21,7 +21,7 @@ void show_usage(char* cmd) {
 }
 
 int main(int argc, char* argv[]) {
-    int round_num = 4, weight = 27, thread_num = 16, mode = 0;//default: 4 rounds, max weight 27
+    int round_num = 3, weight = 25, thread_num = 16, mode = 0;//default: 3 rounds, max weight 25
     int c;
     bool success = true;
 
