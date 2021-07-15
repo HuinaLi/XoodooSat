@@ -73,7 +73,7 @@ Note that:
 Finally, the result is output in result folder.
 
 ## Results
-Synchronously running weight=25 and weight<=25(3 rounds), we took about one month to find 122 trails, with 2 new trails found compared to [Joan Daemen's work](https://tosc.iacr.org/index.php/ToSC/article/view/7359).
+Synchronously running weight=25 and weight<=25(3-round trail), we took about one month to find 122 trails, with 2 new trails found compared to the 3-round trail found by [Joan Daemen et al.](https://tosc.iacr.org/index.php/ToSC/article/view/7359).
 ```
 ./xoodoo -r 3 -w 25 -t 16 -m 0
 ./xoodoo -r 3 -w 25 -t 16 -m 2
