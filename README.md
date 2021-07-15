@@ -68,7 +68,7 @@ Example:
 
 Note that:
 
-!avatar[./xoodoo.png]
+![image][./xoodoo.png]
 
 Finally, the result is output in result folder.
 
