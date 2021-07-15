@@ -60,7 +60,7 @@ Note that:
 the weight in here is actually the number of active columns.  So after get the result of 3-round trails, we can replace the weight by the number of active columns.
 
 
-ou can see the optional parameters like round number(how many rounds to analysis), weight, etc.
+You can see the optional parameters like round number(how many rounds to analysis), weight, etc.
 
 Example:
 ```
