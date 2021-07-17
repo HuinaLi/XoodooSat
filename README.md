@@ -1,7 +1,7 @@
 
 # Xoodoo SAT solver
 
-**Using [CryptominiSAT](https://github.com/msoos/cryptominisat/) to find differential trails of [Xoodoo](https://keccak.team/xoodoo.html)**
+**Using [CryptominiSAT](https://github.com/msoos/cryptominisat/) to find 3-round differential trails of [Xoodoo](https://keccak.team/xoodoo.html)**
 
 ## Install
 
