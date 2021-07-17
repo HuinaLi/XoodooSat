@@ -77,7 +77,7 @@ Note that:
 Finally, the result is output in result folder.
 
 ## Results
-Synchronously running weight=25 and weight<=25(3-round trail), we found 122 trails with about one month. Finally, we compare our result with previous work that the 3-round trails were found by [Joan Daemen et al.](https://tosc.iacr.org/index.php/ToSC/article/view/7359)
+Synchronously running weight=25 and weight<=25(actually in here,  the real weight is 50), we found 122 trails with about one month. Finally, we compare our result with previous work that the 3-round trails were found by [Joan Daemen et al.](https://tosc.iacr.org/index.php/ToSC/article/view/7359)
 ```
 ./xoodoo -r 3 -w 25 -t 16 -m 0
 ./xoodoo -r 3 -w 25 -t 16 -m 2
