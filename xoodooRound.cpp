@@ -1,9 +1,7 @@
 //
-//  KeccakRoundSAT.cpp
-//  SATCollidingTrailSearch
+//  xoodooRound.cpp
 //
-//  Created by Yi Tu on 11/26/19.
-//  Copyright © 2019 Liu Guozhen. All rights reserved.
+//  Created by Haochen on 05/15/21.
 //
 #include <cstdlib>
 #include <chrono>
