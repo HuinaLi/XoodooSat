@@ -69,7 +69,8 @@ Example:
 # weight=25, 3 rounds, 16 threads
 ./xoodoo -r 3 -w 25 -t 16 -m 2
 ```
-
+Hang in the background：  command--nohup and redefine an output file,for example:
+nohup command > myout.file 2>&1 &
 Note that:
 
 ![image](./xoodoo.png)
