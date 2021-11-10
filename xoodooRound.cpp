@@ -10,7 +10,8 @@
 using namespace std::chrono;
 using namespace XOODOOSAT;
 
-XoodooRound::XoodooRound(int rounds, int weight, int thread, int mode) :solver() {
+XoodooRound::XoodooRound(int analysis_mode, int rounds, int weight, int thread, int mode) :solver() {
+    analysis_mode = analysis_mode;
     AS_weight_num = weight;
     AS_state_num = rounds;
     AS_mode = mode;
@@ -55,8 +56,8 @@ XoodooRound::XoodooRound(int rounds, int weight, int thread, int mode) :solver()
     rhoE_L2[1] = 8;
 
     gen_RhoE_T(RhoE_Relation, inverse_RhoE_Relation);
-    gen_RhoW_T(RhoW_Relation);
-    gen_Theta_T(Theta_Relation);
+    gen_RhoW_T(RhoW_Relation, inverse_RhoW_Relation);
+    gen_Theta_T(Theta_Relation, transpose_Theta_Relation);
     gen_xoodoo_Chi_cnf(Chi_Relation);
     gen_xoodoo_AS_cnf(AS_Relation);
     gen_obj_T(obj, solver, AS_weight_num, AS_var_num, AS_mode);
@@ -439,7 +440,7 @@ void XoodooRound::displayXooState(ostream& fout, const tXoodooState &A) {
 }
 
 
-void XoodooRound::gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index) {
+void XoodooRound::gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index, map<unsigned int, unsigned int>& inverse_RhoW_index) {
     Bitmap BitA(var_num, 0);
     tXoodooState temp(X*Y, 0);
     unsigned int i, j;
@@ -454,6 +455,7 @@ void XoodooRound::gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index) {
         for (j = 0; j < BitA.size(); j++) {
             if (BitA[j] == 1) {
                 RhoW_index.insert(pair<unsigned int, unsigned int>(i, j));
+                inverse_RhoW_index.insert(pair<unsigned int, unsigned int>(j, i));
             }
             BitA[j] = 0;
         }
@@ -484,7 +486,7 @@ void XoodooRound::gen_RhoE_T(map<unsigned int, unsigned int>& RhoE_index, map<un
     return;
 }
 
-void XoodooRound::gen_Theta_T(vector<vector<unsigned int>>& relation) {
+void XoodooRound::gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vector<unsigned int>>& transpose_relation) {
     vector<vector<unsigned int>> column;
     //prepare X*Z columns
     for (unsigned int x = 0; x < X; x++) {
@@ -500,14 +502,19 @@ void XoodooRound::gen_Theta_T(vector<vector<unsigned int>>& relation) {
     for (int x = 0; x < X; x++) {
         for (int y = 0; y < Y; y++) {
             for (int z = 0; z < Z; z++) {
-                vector<unsigned int> temp;
+                vector<unsigned int> temp, temp_transpose;
                 temp.push_back(Z*(x + X * y) + z);
+                temp_transpose.push_back(Z*(x + X * y) + z);
                 temp.push_back(Z*(x + X * y) + z);
+                temp_transpose.push_back(Z*(x + X * y) + z);
                 for (int i = 0; i < Y; i++) {
                     temp.push_back(column[Z*((x + X - theta_L1[0]) % X) + ((z + Z - theta_L1[1]) % Z)][i]);
                     temp.push_back(column[Z*((x + X - theta_L2[0]) % X) + ((z + Z - theta_L2[1]) % Z)][i]);
+                    temp_transpose.push_back(column[Z*((x + X + theta_L1[0]) % X) + ((z + Z + theta_L1[1]) % Z)][i]);
+                    temp_transpose.push_back(column[Z*((x + X + theta_L2[0]) % X) + ((z + Z + theta_L2[1]) % Z)][i]);
                 }
                 relation.push_back(temp);
+                transpose_relation.push_back(temp_transpose);
             }
         }
     }
@@ -899,16 +906,27 @@ void XoodooRound::gen_obj_T(vector<vector<int>> &Obj, SATSolver &Solver, int wei
 
 void XoodooRound::add_lambda2solver(SATSolver &Solver, int rounds, int base_offset) {
     cout << "rhoE,inverse_rhoE,rhoW size: " << RhoE_Relation.size() << " " << inverse_RhoE_Relation.size() << " " << RhoW_Relation.size() << " " << Theta_Relation.size() << endl;
-    //linear layer
-    //a1->b1, a2->b2, ...
+    // linear layer
+    // a1->b1, a2->b2, ...
     cout << "start add linear" << endl;
     for (int round = 0; round < rounds - 1; round++) {
         for (int i = 0; i < var_num; i++) {
             vector<unsigned int> temp = {};
-            temp.push_back(RhoW_Relation[Theta_Relation[RhoE_Relation[i]][0]] + var_num + round_var_num * round + base_offset);//output bit position
+
+            if(analysis_mode == 0) {
+                temp.push_back(RhoW_Relation[Theta_Relation[RhoE_Relation[i]][0]] + var_num + round_var_num * round + base_offset);  // output bit position
+            }
+            else {
+                temp.push_back(inverse_RhoE_Relation[transpose_Theta_Relation[inverse_RhoW_Relation[i]][0]] + var_num + round_var_num * round + base_offset);  // output bit position
+            }
 
             for (int j = 1; j < Y * 2 + 2; j++) {
-                temp.push_back(inverse_RhoE_Relation[Theta_Relation[RhoE_Relation[i]][j]] + round_var_num * round + base_offset);//input bit position
+                if(analysis_mode == 0) {
+                    temp.push_back(inverse_RhoE_Relation[Theta_Relation[RhoE_Relation[i]][j]] + round_var_num * round + base_offset);  // input bit position
+                }
+                else {
+                    temp.push_back(RhoW_Relation[transpose_Theta_Relation[inverse_RhoW_Relation[i]][j]] + round_var_num * round + base_offset);  // input bit position
+                }
             }
             Solver.add_xor_clause(temp, false);
         }

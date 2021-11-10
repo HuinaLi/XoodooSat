@@ -52,6 +52,7 @@ AS_mode: weight sum mode, 0 for atmost, 1 for atleast, 2 for equals.
 round_var_num: the number of variables(bits) of a round
 */
 public:
+    int analysis_mode;   // 0 for differential, 1 for linear
     int core_state_num, AS_weight_num, AS_state_num, round_num;
     int AS_var_num, AS_node_var_num, AS_mode, round_var_num;
     int rho_plane[2], theta_L1[2], theta_L2[2], rhoW_L1[2], rhoW_L2[2], rhoE_L1[2], rhoE_L2[2];//parameters in the theta and rho process
@@ -61,13 +62,13 @@ public:
     SATSolver solver;//the solver
 
     map<unsigned int, unsigned int> RhoE_Relation, inverse_RhoE_Relation;
-    map<unsigned int, unsigned int> RhoW_Relation;
-    vector<vector<unsigned int>> Theta_Relation;
+    map<unsigned int, unsigned int> RhoW_Relation, inverse_RhoW_Relation;
+    vector<vector<unsigned int>> Theta_Relation, transpose_Theta_Relation;
     vector<vector<string>> Chi_Relation;
     vector<vector<string>> AS_Relation;
     vector<vector<int>> obj;
 
-    XoodooRound(int rounds, int weight, int thread, int mode);//constructor
+    XoodooRound(int analysis_mode, int rounds, int weight, int thread, int mode);//constructor
     unsigned int compute_Theta_Order();//the theta order
     //function in a Xoodoo round
     void theta(tXoodooState &A);//A is a state, below is the same
@@ -106,9 +107,9 @@ public:
     void display(ostream& fout, const State &A);//display state
     void displayXooState(ostream& fout, const tXoodooState &A);//display tXoodooState
 
-    void gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index);//generate a map for rhow(state)
+    void gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index, map<unsigned int, unsigned int>& inverse_RhoW_index);//generate a map for rhow(state) and rhow-1(state)
     void gen_RhoE_T(map<unsigned int, unsigned int>& RhoE_index, map<unsigned int, unsigned int>& inverse_RhoE_index);//generate maps for rhoe(state) and rhoe-1(state)
-    void gen_Theta_T(vector<vector<unsigned int>>& relation);//generate a map for theta(state)
+    void gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vector<unsigned int>>& transposse_relation);//generate a map for theta(state)
     void gen_obj_T(vector<vector<int>> &Obj, SATSolver &Solver, int weight, int as_var_num, int as_mode);//generate cnf for AS
     void gen_extend_AS_cnf_num(string &cnf_num);//get var list for pysat.card function
     void add_lambda2solver(SATSolver &Solver, int rounds, int base_offset = 0);//add clauses to solver
@@ -130,7 +131,7 @@ public:
     
     bool read2assumptions(vector<vector<Lit>> &assumptions, ifstream &infile, int mode = 2, int offset = 0, const vector<string> &st = {"ab","NE","bb"});//read assumption according to infile
 
-    void XoodooRound_AS();//differential analysis round function (TODO: trail extension), generate clauses for solver 
+    void XoodooRound_AS();//differential/linear analysis round function (TODO: trail extension), generate clauses for solver 
     void extendRound_AS();//trail extension
     void main();//run the whole Xoodoo differential analysis process
     void gen_chi_DDT(unordered_map<int,set<int>> &ddt);//generate DDT table for chi
