@@ -113,7 +113,7 @@ void XoodooRound::transposetheta(tXoodooState &A) {
             P[x] ^= A[indexXY(x, y)];
     }
     for (x = 0; x < X; x++)
-        E[x] = RORxoo(P[(x + X + theta_L1[0]) % X], theta_L1[1]) ^ ROLxoo(P[(x + X + theta_L2[0]) % X], theta_L2[1]);
+        E[x] = RORxoo(P[(x + X + theta_L1[0]) % X], theta_L1[1]) ^ RORxoo(P[(x + X + theta_L2[0]) % X], theta_L2[1]);
     for (x = 0; x < X; x++)
         for (y = 0; y < Y; y++)
             A[indexXY(x, y)] ^= E[x];
@@ -587,6 +587,89 @@ void XoodooRound::write_result(const string pathname, const int weight, const in
     out << "\n" << endl;
     out.close();
 }
+
+void XoodooRound::show_trail_details(const string in_pathname, const string out_pathname) {
+    States solution;
+    ifstream in_solution(in_pathname.data(), ios::in);
+    ofstream out;
+    out.open(out_pathname, ios::ate);//clear result txt first
+    out.close();
+    out.open(out_pathname, ios::out | ios::app);
+    
+    while (read2States(solution, in_solution, 0)) {
+        vector<StateColumns> detail_rounds;
+        vector<int> weights;
+
+        for (int i = 0; i < solution.size() - 1; i++) {
+            tXoodooState cur;
+            StateColumn tmp;
+            StateColumns detail_round;
+
+            State2XooState(solution[i], cur);
+            XooState2StateColumn(cur, tmp);
+            detail_round.push_back(tmp);
+            weights.push_back(caculateStateColumnWeight(tmp));
+
+            rhoE(cur);
+            XooState2StateColumn(cur, tmp);
+            detail_round.push_back(tmp);
+
+            theta(cur);
+            XooState2StateColumn(cur, tmp);
+            detail_round.push_back(tmp);
+
+            rhoW(cur);
+            XooState2StateColumn(cur, tmp);
+            detail_round.push_back(tmp);
+
+            detail_rounds.push_back(detail_round);
+
+            if (i == solution.size() - 2) {
+                weights.push_back(caculateStateColumnWeight(tmp));
+            }
+        }
+        int total_weight = 0;
+        for (int i = 0; i < weights.size(); i++) {
+            total_weight += weights[i];
+        }
+        out << round_num << "-round differential trail core of total weight " << total_weight * 2 << endl;
+        out << "Round 0 would have weight " << weights[0] * 2 <<endl;
+        
+        for (int i = 0; i < detail_rounds.size(); i++) {
+            out << "Round " << i + 1 << " (weight " << weights[i + 1] * 2 << "):" <<endl;
+            
+            out << "NE";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << " \xCF\x81" << "E  ";
+            out << "SE";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << "  \xCE\xB8  ";
+            out << "SW";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << " \xCF\x81W  ";
+            out << "NW";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << endl;
+
+            for (int x = 0; x < X; x++) {
+                for (int j = 0; j < 4; j++) { // 4 states in a round
+                    StateColumn tmp = detail_rounds[i][j];
+                    for (int z = 0; z < Z; z++) {
+                        if (tmp[Z*x + z] == 0) out << ".";
+                        else {
+                            out << tmp[Z*x + z];
+                        }
+                    }
+                    if (j < 3) out << "  |  ";
+                }
+                out << endl;
+            }
+        }
+        out << endl;
+    }
+    out.close();
+}
+
 
 int XoodooRound::get_weight(SATSolver &Solver, int rounds, int core_var_num) {
     //get each State weight(a1,a2,...)
