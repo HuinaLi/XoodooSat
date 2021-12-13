@@ -650,6 +650,7 @@ void XoodooRound::show_trail_details(const string in_pathname, const string out_
             out << "NW";
             for (unsigned int i = 2; i < Z; i++) out << " ";
             out << endl;*/ //DC
+        
          for (int i = 0; i < detail_rounds.size(); i++) {
             out << "Round " << i + 1 << " (weight " << weights[i + 1] * 2 << "):" <<endl;
             
