@@ -72,6 +72,7 @@ public:
     unsigned int compute_Theta_Order();//the theta order
     //function in a Xoodoo round
     void theta(tXoodooState &A);//A is a state, below is the same
+    void transposetheta(tXoodooState &A);
     void rhoW(tXoodooState &A);
     void rhoE(tXoodooState &A);
     void inversetheta(tXoodooState &A);//A is a state, below is the same
@@ -80,7 +81,8 @@ public:
     void chi(tXoodooState &A);
     tXoodooState lambda(tXoodooState A);
     tXoodooState inverselambda(tXoodooState A);
-
+    tXoodooState transposelambda(tXoodooState A);
+	
     void Bit2XooState(const Bitmap &A, tXoodooState &B);
     void XooState2Bit(const tXoodooState &A, Bitmap &B);
     void Bit2State(const Bitmap &A, State &B);
