@@ -833,7 +833,8 @@ void XoodooRound::check_trails(const string pathname, int i, int mode) {
             res_xoo.push_back(tmp);
         }
         for (int m = 0; m < print_size - 1; m++) {
-            tXoodooState tmp = lambda(res_xoo[m]);
+            tXoodooState tmp = lambda(res_xoo[m]);//DC
+            /*tXoodooState tmp = transposelambda(res_xoo[m]);*/ //LC
             cout << "a" << m + 1 << ":" << endl;
             displayXooState(cout, res_xoo[m]);
             cout << endl;
