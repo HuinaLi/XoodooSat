@@ -89,10 +89,11 @@ int main(int argc, char* argv[]) {
     XoodooRound xoo(analysis_mode, round_num, weight, thread_num, mode);
 
     /*auto diff = xoo.compare_trails("./test.txt",0,"./DC.txt",1);
-    for(int i=0; i<diff[1].size(); i++) {
-        cout<<diff[1][i]<<" trail in DC"<<endl;
-        xoo.check_trails("./DC.txt",diff[1][i],1);
-    }*/
+    for(int i=0; i<diff[0].size(); i++) {
+        cout<<diff[0][i]<<" trail in DC"<<endl;
+        xoo.check_trails("./DC.txt",diff[0][i],1);
+    }*/ //see the index of our new trail and detail info.
+    
     //xoo.check_trails("./extra_trails.txt",1,0);
     //xoo.check_trails("./test.txt",70,0);
     xoo.main();
