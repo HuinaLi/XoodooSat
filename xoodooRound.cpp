@@ -104,6 +104,21 @@ void XoodooRound::theta(tXoodooState &A) {
             A[indexXY(x, y)] ^= E[x];
 }
 
+void XoodooRound::transposetheta(tXoodooState &A) {
+    unsigned int x, y;
+    vector<tXoodooLane> P(X, 0), E(X, 0);
+
+    for (x = 0; x < X; x++) {
+        for (y = 0; y < Y; y++)
+            P[x] ^= A[indexXY(x, y)];
+    }
+    for (x = 0; x < X; x++)
+        E[x] = RORxoo(P[(x + X + theta_L1[0]) % X], theta_L1[1]) ^ ROLxoo(P[(x + X + theta_L2[0]) % X], theta_L2[1]);
+    for (x = 0; x < X; x++)
+        for (y = 0; y < Y; y++)
+            A[indexXY(x, y)] ^= E[x];
+}
+
 void XoodooRound::inversetheta(tXoodooState &A) {
     unsigned int x, y;
     vector<tXoodooLane> P(X, 0);
@@ -194,6 +209,13 @@ tXoodooState XoodooRound::lambda(tXoodooState A) {
     rhoE(A);
     theta(A);
     rhoW(A);
+    return A;
+}
+
+tXoodooState XoodooRound::transposelambda(tXoodooState A) {
+    inverserhoW(A);
+    transposetheta(A);
+    inverserhoE(A);
     return A;
 }
 
