@@ -635,7 +635,7 @@ void XoodooRound::show_trail_details(const string in_pathname, const string out_
         out << round_num << "-round differential trail core of total weight " << total_weight * 2 << endl;
         out << "Round 0 would have weight " << weights[0] * 2 <<endl;
         
-        for (int i = 0; i < detail_rounds.size(); i++) {
+       /* for (int i = 0; i < detail_rounds.size(); i++) {
             out << "Round " << i + 1 << " (weight " << weights[i + 1] * 2 << "):" <<endl;
             
             out << "NE";
@@ -649,7 +649,22 @@ void XoodooRound::show_trail_details(const string in_pathname, const string out_
             out << " \xCF\x81W  ";
             out << "NW";
             for (unsigned int i = 2; i < Z; i++) out << " ";
-            out << endl;
+            out << endl;*/ //DC
+         for (int i = 0; i < detail_rounds.size(); i++) {
+            out << "Round " << i + 1 << " (weight " << weights[i + 1] * 2 << "):" <<endl;
+            
+            out << "NW";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << " \xCF\x81" << "W-1  ";
+            out << "SW";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << " \xCE\xB8"<< "T  " ;
+            out << "SE";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << " \xCF\x81"<< "E-1 ";
+            out << "NE";
+            for (unsigned int i = 2; i < Z; i++) out << " ";
+            out << endl;  //LC
 
             for (int x = 0; x < X; x++) {
                 for (int j = 0; j < 4; j++) { // 4 states in a round
