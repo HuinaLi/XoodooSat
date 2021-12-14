@@ -10,7 +10,7 @@
 using namespace std::chrono;
 using namespace XOODOOSAT;
 
-XoodooRound::XoodooRound(int analysis_mode, int rounds, int weight, int thread, int mode) :solver() {
+XoodooRound::XoodooRound(int analy_mode, int rounds, int weight, int thread, int mode) :solver() {
     analysis_mode = analysis_mode;
     AS_weight_num = weight;
     AS_state_num = rounds;
