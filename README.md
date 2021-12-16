@@ -78,7 +78,7 @@ Note that:
 Finally, the result is output in result folder.
 
 ## Results
-Synchronously running weight=25 and weight<=25(actually in here,  the real weight is 50), we took about one month to find 122 trails, with 2 new trails found compared to  [Joan Daemen et al.](https://tosc.iacr.org/index.php/ToSC/article/view/7359)
+we took about two month to find 122 differential and 123 linear trails, respectively. However, if we synchronously running weight=25 and weight<=25(actually in here,  the real weight is 50), we only need one months due to the order of solutions is different under different parameter setting.
 ```
 ./xoodoo -r 3 -w 25 -t 16 -m 0
 ./xoodoo -r 3 -w 25 -t 16 -m 2
