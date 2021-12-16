@@ -49,12 +49,13 @@ Run:
 ```
 ./xoodoo -h
 Options:
- -r, --round round_num      How many rounds to trail (default 3).
- -w, --weight weight        The weight to bound for the trail (default 25).
- -t, --thread thread        The number of threads for the process (default 16).
- -m, --mode mode            The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
-                            See pysat_card_AS.py for more information.
- -h, --help                 Help information.
+ -a, --analysis analysis_mode    0 for differential, 1 for linear analysis (default 0).
+ -r, --round round_num           How many rounds to trail (default 3).
+ -w, --weight weight             The weight to bound for the trail (default 25).
+ -t, --thread thread             The number of threads for the process (default 16).
+ -m, --mode mode                 The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
+                                 See pysat_card_AS.py for more information.
+ -h, --help                      Help information.
 ```
 Note that:
 the weight in here is actually the number of active columns.  So after get the result of 3-round trails, we can replace the weight by the number of active columns.
