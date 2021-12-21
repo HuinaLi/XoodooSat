@@ -49,7 +49,7 @@ Run:
 ```
 ./xoodoo -h
 Options:
- -a, --analysis analysis_mode    0 for differential, 1 for linear analysis (default 0).
+ -a, --analysis analysis_mode    0 for differential, 1 for linear Cryptanalysis (default 0).
  -r, --round round_num           How many rounds to trail (default 3).
  -w, --weight weight             The weight to bound for the trail (default 25).
  -t, --thread thread             The number of threads for the process (default 16).
@@ -65,10 +65,10 @@ You can see the optional parameters like round number(how many rounds to analysi
 
 Example:
 ```
-# weight<=25, 3 rounds, 16 threads
-./xoodoo -r 3 -w 25 -t 16 -m 0
-# weight=25, 3 rounds, 16 threads
-./xoodoo -r 3 -w 25 -t 16 -m 2
+# differential, weight<=25, 3 rounds, 16 threads
+./xoodoo -a 0 -r 3 -w 25 -t 16 -m 0
+# linear, weight<=25, 3 rounds, 16 threads
+./xoodoo -a 1 -r 3 -w 25 -t 16 -m 2
 ```
 Hang in the background：  command--nohup and redefine an output file,for example:
 nohup command > myout.file 2>&1 &
