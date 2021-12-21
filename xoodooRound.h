@@ -111,7 +111,7 @@ public:
 
     void gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index, map<unsigned int, unsigned int>& inverse_RhoW_index);//generate a map for rhow(state) and rhow-1(state)
     void gen_RhoE_T(map<unsigned int, unsigned int>& RhoE_index, map<unsigned int, unsigned int>& inverse_RhoE_index);//generate maps for rhoe(state) and rhoe-1(state)
-    void gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vector<unsigned int>>& transposse_relation);//generate a map for theta(state)
+    void gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vector<unsigned int>>& transpose_relation);//generate a map for theta(state)
     void gen_obj_T(vector<vector<int>> &Obj, SATSolver &Solver, int weight, int as_var_num, int as_mode);//generate cnf for AS
     void gen_extend_AS_cnf_num(string &cnf_num);//get var list for pysat.card function
     void add_lambda2solver(SATSolver &Solver, int rounds, int base_offset = 0);//add clauses to solver
