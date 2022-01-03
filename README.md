@@ -79,7 +79,7 @@ Note that:
 Finally, the result is output in result folder.
 
 ## Results
-we took about two month to find 122 differential and 123 linear trails, respectively. However, if we synchronously running weight=25 and weight<=25(actually in here,  the real weight is 50), we only need one months due to the order of solutions is different under different parameter setting. Our experiment is equipped with Intel(R) Xeon(R) CPU E5-4650 v3 @ 2.10GHz, 12 cores. 
+we took about two months to find 122 differential trails. However, if we synchronously running weight=25 and weight<=25(actually in here,  the real weight is 50), we only need one months due to the order of solutions is different under different parameter setting. For linear cryptanalysis we took about 50 days to obtain 123 linear trails.  Our experiment is equipped with Intel(R) Xeon(R) CPU E5-4650 v3 @ 2.10GHz, 12 cores for searching differential trails, Intel(R) Xeon(R) CPU E7-4830 v3 @ 2.10GHz,12 cores for searching linear trails.
 ```
 ./xoodoo -r 3 -w 25 -t 16 -m 0
 ./xoodoo -r 3 -w 25 -t 16 -m 2
