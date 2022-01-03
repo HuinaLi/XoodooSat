@@ -82,14 +82,19 @@ Finally, the result is output in result folder.
 Our experiment is equipped with Intel(R) Xeon(R) CPU E5-4650 v3 @ 2.10GHz, 12 cores for searching differential trails, Intel(R) Xeon(R) CPU E7-4830 v3 @ 2.10GHz,12 cores for searching linear trails.
 
 For weight <= 50(17.4G)
+
 we took about two months to find 122 differential trails. However, if we synchronously running -w 25 and -w<=25(actually in here,  the real weight is 50), we only need one months due to the order of solutions is different under different parameter setting. For linear cryptanalysis we took about 50 days 21 hours 51 minutes to obtain 123 linear trails. 
 
 For weight <= 48(14.3G)
+
 DC(67): 1 day 9 hours 51 minutes
+
 LC(67): 7 days 9 hours 17 minutes
 
 For weight <=46
+
 DC(34): 2 hours 52 minutes 
+
 LC(36): 1 days 8 hours 10 minutes
 
 ```
