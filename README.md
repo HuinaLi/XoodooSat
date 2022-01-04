@@ -91,7 +91,7 @@ DC(67): 1 day 9 hours 51 minutes
 
 LC(67): 7 days 9 hours 17 minutes
 
-For weight <=46
+For weight <=46(4.7G)
 
 DC(34): 2 hours 52 minutes 
 
