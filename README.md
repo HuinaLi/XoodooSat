@@ -93,7 +93,7 @@ LC(67): 7 days 9 hours 17 minutes
 
 For weight <=46(4.7G)
 
-DC(34): 2 hours 52 minutes 
+DC(36): 2 hours 52 minutes 
 
 LC(36): 1 days 8 hours 10 minutes
 
