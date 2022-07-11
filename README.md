@@ -49,12 +49,13 @@ Run:
 ```
 ./xoodoo -h
 Options:
- -r, --round round_num      How many rounds to trail (default 3).
- -w, --weight weight        The weight to bound for the trail (default 25).
- -t, --thread thread        The number of threads for the process (default 16).
- -m, --mode mode            The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
-                            See pysat_card_AS.py for more information.
- -h, --help                 Help information.
+ -a, --analysis analysis_mode    0 for differential, 1 for linear Cryptanalysis (default 0).
+ -r, --round round_num           How many rounds to trail (default 3).
+ -w, --weight weight             The weight to bound for the trail (default 25).
+ -t, --thread thread             The number of threads for the process (default 16).
+ -m, --mode mode                 The mode for weight sum (default 0), choices={0,1,2}, 0 for atmost, 1 for atleast, 2 for equals.
+                                 See pysat_card_AS.py for more information.
+ -h, --help                      Help information.
 ```
 Note that:
 the weight in here is actually the number of active columns.  So after get the result of 3-round trails, we can replace the weight by the number of active columns.
@@ -64,13 +65,14 @@ You can see the optional parameters like round number(how many rounds to analysi
 
 Example:
 ```
-# weight<=25, 3 rounds, 16 threads
-./xoodoo -r 3 -w 25 -t 16 -m 0
-# weight=25, 3 rounds, 16 threads
-./xoodoo -r 3 -w 25 -t 16 -m 2
+# differential, weight<=25, 3 rounds, 16 threads
+./xoodoo -a 0 -r 3 -w 25 -t 16 -m 0
+# linear, weight<=25, 3 rounds, 16 threads
+./xoodoo -a 1 -r 3 -w 25 -t 16 -m 2
+# Hang in the background
+nohup ./xoodoo -a 0 -r 3 -w 25 -t 16 -m 2 </dev/null > dc_3r_25.log 2>&1 &
 ```
-Hang in the background：  command--nohup and redefine an output file,for example:
-nohup command > myout.file 2>&1 &
+
 Note that:
 
 ![image](./xoodoo.png)
@@ -78,7 +80,24 @@ Note that:
 Finally, the result is output in result folder.
 
 ## Results
-Synchronously running weight=25 and weight<=25(actually in here,  the real weight is 50), we took about one month to find 122 trails, with 2 new trails found compared to  [Joan Daemen et al.](https://tosc.iacr.org/index.php/ToSC/article/view/7359)
+Our experiment is equipped with Intel(R) Xeon(R) CPU E5-4650 v3 @ 2.10GHz, 12 cores for searching differential trails, Intel(R) Xeon(R) CPU E7-4830 v3 @ 2.10GHz,12 cores for searching linear trails.
+
+For weight <= 50(17.4G)
+
+we took about two months to find 122 differential trails. However, if we synchronously running -w 25 and -w<=25(actually in here,  the real weight is 50), we only need one months due to the order of solutions is different under different parameter setting. For linear cryptanalysis we took about 50 days 21 hours 51 minutes to obtain 123 linear trails. 
+
+For weight <= 48(14.3G)
+
+DC(67): 1 day 9 hours 51 minutes
+
+LC(67): 7 days 9 hours 17 minutes
+
+For weight <=46(4.7G)
+
+DC(34): 2 hours 52 minutes 
+
+LC(36): 1 days 8 hours 10 minutes
+
 ```
 ./xoodoo -r 3 -w 25 -t 16 -m 0
 ./xoodoo -r 3 -w 25 -t 16 -m 2

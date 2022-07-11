@@ -10,14 +10,14 @@
 using namespace std::chrono;
 using namespace XOODOOSAT;
 
-XoodooRound::XoodooRound(int analysis_mode, int rounds, int weight, int thread, int mode) :solver() {
-    analysis_mode = analysis_mode;
+XoodooRound::XoodooRound(int analy_mode, int rounds, int weight, int thread, int mode) {
+    analysis_mode = analy_mode;
     AS_weight_num = weight;
     AS_state_num = rounds;
     AS_mode = mode;
     round_num = rounds;
-    core_state_num = 2 * (round_num - 1);//trail a1,b1,a2,b2,...
-    AS_var_num = X * Z*AS_state_num;
+    core_state_num = 2 * (round_num - 1);// trail a1,b1,a2,b2,...
+    AS_var_num = X * Z * AS_state_num;
     AS_node_var_num = X * Z;
     round_var_num = var_num * 2;
     objFilePath = default_obj_file_path;
@@ -330,14 +330,22 @@ void XoodooRound::StateColumn2XooState(const StateColumn &A, tXoodooState &B) {
     Bit2XooState(BitA, B);
 }
 
-
+/**
+ * @brief given a tXoodooState, calculate its weight
+ * 
+ * @param A(tXoodooState) input state
+ * @return int 
+ */
 int XoodooRound::caculateXooStateWeight(const tXoodooState &A) {
     int weight = 0;
     for (int x = 0; x < X; x++) {
         for (int z = 0; z < Z; z++) {
             for (int y = 0; y < Y; y++) {
+                // check each column for active bits
                 if ((A[indexXY(x, y)] >> (z)) & 0x1) {
+                    // found an active bit, weight++
                     ++weight;
+                    // after weight++, exclude this column(using "break")
                     break;
                 }
             }
@@ -346,6 +354,12 @@ int XoodooRound::caculateXooStateWeight(const tXoodooState &A) {
     return weight;
 }
 
+/**
+ * @brief given a StateColumn, calculate its weight
+ * 
+ * @param A (StateColumn) input state in column form, A[i] is a column
+ * @return int 
+ */
 int XoodooRound::caculateStateColumnWeight(const StateColumn &A) {
     int weight = 0;
     for (int x = 0; x < X; x++) {
@@ -356,26 +370,43 @@ int XoodooRound::caculateStateColumnWeight(const StateColumn &A) {
     return weight;
 }
 
-
+/**
+ * @brief State << (dx, dz)
+ * 
+ * @param dx_dz (dx, dz), shift bits
+ * @param A (State), state to shift
+ * @return State 
+ */
 State XoodooRound::ShiftXZ(const vector<int> &dx_dz, const State &A) {
+    // first convert State to tXoodooState
     tXoodooState stateA(X*Y, 0);
     State2XooState(A, stateA);
     tXoodooState shiftA(stateA);
 
     for (int x = 0; x < X; x++) {
         for (int y = 0; y < Y; y++) {
-            shiftA[indexXY(x, y)] = ROLxoo(stateA[indexXY(x + X - dx_dz[0], y)], dx_dz[1]);//shift (dx,dz)
+            // shift (dx,dz)
+            shiftA[indexXY(x, y)] = ROLxoo(stateA[indexXY(x + X - dx_dz[0], y)], dx_dz[1]);
         }
     }
     State res;
+    // convert tXoodooState to State
     XooState2State(shiftA, res);
     return res;
 }
 
+/**
+ * @brief check if State A and B are symmetry (shift (x,z))
+ * 
+ * @param A 
+ * @param B 
+ * @return bool
+ */
 bool XoodooRound::StateEqualAfterShift(const State &A, const State &B) {//A, B is sorted
     if (A.size() != B.size()) return false;
     if (A == B) return true;
 
+    // shift (x,z)
     for (int dx = 0; dx < X; dx++) {
         for (int dz = 0; dz < Z; dz++) {
             State shiftA = ShiftXZ({ dx,dz }, A);
@@ -385,6 +416,14 @@ bool XoodooRound::StateEqualAfterShift(const State &A, const State &B) {//A, B i
     return false;
 }
 
+/**
+ * @brief check if State A < B
+ *          value of A = \sum_{i=0}^{383} pow(2, i)*bits_of_A[i]
+ * 
+ * @param A 
+ * @param B 
+ * @return bool 
+ */
 bool XoodooRound::isSmaller(const State &A, const State &B) {//state A<B; A, B is sorted
     int i = A.size() - 1, j = B.size() - 1;
     while (i >= 0 && j >= 0) {
@@ -398,6 +437,12 @@ bool XoodooRound::isSmaller(const State &A, const State &B) {//state A<B; A, B i
     return i < j;
 }
 
+/**
+ * @brief by shifting (x,z), shift State A to its smallest symmetry State
+ * 
+ * @param A 
+ * @return {int, int} dx_dz, the shift position corresponding to the smallest symmetry state
+ */
 vector<int> XoodooRound::genSmallestState(const State &A) {//A is sorted  
     vector<int> dx_dz = { 0, 0 };
     State smallest(A);
@@ -415,7 +460,12 @@ vector<int> XoodooRound::genSmallestState(const State &A) {//A is sorted
     return dx_dz;
 }
 
-
+/**
+ * @brief print State A
+ * 
+ * @param fout 
+ * @param A 
+ */
 void XoodooRound::display(ostream& fout, const State &A) {
     vector<unsigned int> tempA(X*Z, 0);//State column map, 0<=tempA[i]<=3
     for (int i = 0; i < A.size(); i++) {
@@ -433,62 +483,112 @@ void XoodooRound::display(ostream& fout, const State &A) {
     }
 }
 
+/**
+ * @brief print tXoodooState A
+ * 
+ * @param fout 
+ * @param A 
+ */
 void XoodooRound::displayXooState(ostream& fout, const tXoodooState &A) {
     State tmp;
     XooState2State(A, tmp);
     display(fout, tmp);
 }
 
-
+/**
+ * @brief generate RhoW and inverse_RhoW's input-output bit relation
+ * 
+ * @param RhoW_index 384 size map, {input bit, output bit}
+ * @param inverse_RhoW_index 384 size map, {input bit, output bit}
+ */
 void XoodooRound::gen_RhoW_T(map<unsigned int, unsigned int>& RhoW_index, map<unsigned int, unsigned int>& inverse_RhoW_index) {
     Bitmap BitA(var_num, 0);
     tXoodooState temp(X*Y, 0);
     unsigned int i, j;
 
     for (i = 0; i < BitA.size(); i++) {
+        // only set the input bit to 1
+        // the other input bits are 0
+        // then only the corresponding output bit is 1
+        // the other output bits are 0
         BitA[i] = 1;
 
+        // convert to tXoodooState
         Bit2XooState(BitA, temp);
+        // RhoW
         rhoW(temp);
+        // convert back to Bitmap
         XooState2Bit(temp, BitA);
-
+        // find the corresponding output bit, which is 1
         for (j = 0; j < BitA.size(); j++) {
             if (BitA[j] == 1) {
+                // log the input-output bit relation
+                // i is the input
+                // j is the output
                 RhoW_index.insert(pair<unsigned int, unsigned int>(i, j));
+                // inverse is (j, i)
                 inverse_RhoW_index.insert(pair<unsigned int, unsigned int>(j, i));
             }
+            // set all bits back to 0
             BitA[j] = 0;
         }
     }
     return;
 }
 
+/**
+ * @brief generate RhoE and inverse_RhoE's input-output bit relation
+ * 
+ * @param RhoE_index 
+ * @param inverse_RhoE_index 
+ */
 void XoodooRound::gen_RhoE_T(map<unsigned int, unsigned int>& RhoE_index, map<unsigned int, unsigned int>& inverse_RhoE_index) {
     Bitmap BitA(var_num, 0);
     tXoodooState temp(X*Y, 0);
     unsigned int i, j;
 
     for (i = 0; i < BitA.size(); i++) {
+        // only set the input bit to 1
+        // the other input bits are 0
+        // then only the corresponding output bit is 1
+        // the other output bits are 0
         BitA[i] = 1;
 
+        // convert to tXoodooState
         Bit2XooState(BitA, temp);
+        // RhoE
         rhoE(temp);
+        // convert back to Bitmap
         XooState2Bit(temp, BitA);
-
+        // find the corresponding output bit, which is 1
         for (j = 0; j < BitA.size(); j++) {
             if (BitA[j] == 1) {
+                // log the input-output bit relation
+                // i is the input
+                // j is the output
                 RhoE_index.insert(pair<unsigned int, unsigned int>(i, j));
+                // inverse is (j, i)
                 inverse_RhoE_index.insert(pair<unsigned int, unsigned int>(j, i));
             }
+            // set all bits back to 0
             BitA[j] = 0;
         }
     }
     return;
 }
 
+/**
+ * @brief generate Theta and transpose Thetas input-output bit relation
+ *          an output bit of Theta is related to 7 input bits of Theta
+ *          a[x,y,z] = a[x,y,z] ^ \sum_{y=0}^{2} a[x-1,y,z-5] ^ \sum_{y=0}^{2} a[x-1,y,z-14]
+ * 
+ * @param relation 
+ * @param transpose_relation 
+ */
 void XoodooRound::gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vector<unsigned int>>& transpose_relation) {
+    // 4*32=128 columns
     vector<vector<unsigned int>> column;
-    //prepare X*Z columns
+    // each column[(x,z)] contains 3 bit indexes of y, i.e. (x + y * 4)*32 + z
     for (unsigned int x = 0; x < X; x++) {
         for (unsigned int z = 0; z < Z; z++) {
             vector<unsigned int> aColumn = {};
@@ -503,10 +603,13 @@ void XoodooRound::gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vec
         for (int y = 0; y < Y; y++) {
             for (int z = 0; z < Z; z++) {
                 vector<unsigned int> temp, temp_transpose;
+                // output bit a[x,y,z]
                 temp.push_back(Z*(x + X * y) + z);
                 temp_transpose.push_back(Z*(x + X * y) + z);
+                // input bit a[x,y,z]
                 temp.push_back(Z*(x + X * y) + z);
                 temp_transpose.push_back(Z*(x + X * y) + z);
+                // input bit \sum_{y=0}^{2} a[x-1,y,z-5] ^ \sum_{y=0}^{2} a[x-1,y,z-14]
                 for (int i = 0; i < Y; i++) {
                     temp.push_back(column[Z*((x + X - theta_L1[0]) % X) + ((z + Z - theta_L1[1]) % Z)][i]);
                     temp.push_back(column[Z*((x + X - theta_L2[0]) % X) + ((z + Z - theta_L2[1]) % Z)][i]);
@@ -520,6 +623,11 @@ void XoodooRound::gen_Theta_T(vector<vector<unsigned int>>& relation, vector<vec
     }
 }
 
+/**
+ * @brief combine str cnf with to_string(AS_var_num)
+ * 
+ * @param cnf_num 
+ */
 void XoodooRound::gen_extend_AS_cnf_num(string &cnf_num) {
     cnf_num += to_string(AS_var_num) + " ";
     /*if(round_num == 2) {
@@ -527,7 +635,14 @@ void XoodooRound::gen_extend_AS_cnf_num(string &cnf_num) {
     }*/
 }
 
+/**
+ * @brief ban solution States and its symmetry States
+ * 
+ * @param Solver 
+ * @param A map<State, int>, A.first is the State to ban, A.second is the var offset
+ */
 void XoodooRound::ban_solution(SATSolver &Solver, const map<State, int> &A) {
+    // check if the State is 0
     bool zero = true;
     for (auto iter = A.begin(); iter != A.end();iter++) {
         zero = zero && (iter->first.size() == 0);
@@ -537,6 +652,7 @@ void XoodooRound::ban_solution(SATSolver &Solver, const map<State, int> &A) {
         for (int dz = 0; dz < Z; dz++) {
             vector<Lit> ban_solutions;
             for (auto iter = A.begin(); iter != A.end();iter++) {
+                // ban all shifted symmetric States
                 State shiftA = ShiftXZ({ dx,dz }, iter->first);
                 Bitmap BitA(var_num, 0);
                 State2Bit(shiftA, BitA);
@@ -546,11 +662,20 @@ void XoodooRound::ban_solution(SATSolver &Solver, const map<State, int> &A) {
             }
             Solver.add_clause(ban_solutions);
             ban_solutions.clear();
+            // if the State is 0, no need to shift since 0 << (x,z) = 0 for all (x,z)
             if (zero) return;
         }
     }
 }
 
+/**
+ * @brief write a solution to a file in a readable form
+ * 
+ * @param pathname 
+ * @param weight 
+ * @param solution_count 
+ * @param solution (States), a solution, containing r States, r is the round number
+ */
 void XoodooRound::write_result(const string pathname, const int weight, const int solution_count, const States &solution) {
     ofstream out(pathname, ios::out | ios::app);
     out << "weight " << weight << " solution " << solution_count << endl;
@@ -566,8 +691,16 @@ void XoodooRound::write_result(const string pathname, const int weight, const in
     out.close();
 }
 
+/**
+ * @brief calculate the weight of the Solver's solution
+ * 
+ * @param Solver 
+ * @param rounds 
+ * @param core_var_num 
+ * @return int 
+ */
 int XoodooRound::get_weight(SATSolver &Solver, int rounds, int core_var_num) {
-    //get each State weight(a1,a2,...)
+    // get each State weight(a1,a2,...)
     vector<int> as_weight(rounds, 0);
     for (int i = 0; i < AS_node_var_num; i++) {
         for (int j = 0; j < rounds; j++) {
@@ -576,7 +709,7 @@ int XoodooRound::get_weight(SATSolver &Solver, int rounds, int core_var_num) {
             }
         }
     }
-    //get total weight
+    // get total weight
     int weight = 0;
     /*if(round_num == 2) weight = as_weight[0]*2 + as_weight[1];
     else {
@@ -586,14 +719,25 @@ int XoodooRound::get_weight(SATSolver &Solver, int rounds, int core_var_num) {
     return weight;
 }
 
-
+/**
+ * @brief solve all solutions by iteratively banning solved solutions and write solutions to a file
+ * 
+ * @param Solver 
+ * @param pathname 
+ * @param rounds 
+ * @param base_offset 
+ * @param core_var_num 
+ * @param assumption you can solve with an assumption
+ */
 void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int rounds, int base_offset, int core_var_num, const vector<Lit> &assumption) {
     int counting = 0;
-    map<int, int> solution_counts;//map<weight,solution_counts>
+    map<int, int> solution_counts;// map<weight, solution_counts>
 
     while (true) {
         lbool ret;
-        if (assumption.size() == 0) ret = Solver.solve();
+        if (assumption.size() == 0) {
+            ret = Solver.solve();
+        }
         else {
             cout << "got a assumption" << endl;
             ret = Solver.solve(&assumption);
@@ -602,15 +746,21 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
             assert(ret == l_False);
             cout << "reach end" << endl;
             cout << "counting: " << counting << endl;
-            //All solutions found.
+            // All solutions found.
+
+            // print date and time
+            time_point<system_clock> start = system_clock::now();
+            auto st = system_clock::to_time_t(start);
+            struct tm* stm = localtime(&st);
+            cout << stm->tm_mon + 1 << " " << stm->tm_mday << " " << stm->tm_hour << ":" << stm->tm_min << ":" << stm->tm_sec << endl;
             exit(0);
         }
 
-        //start processing solution
-        //get weight
+        // start processing solution
+        // get weight
         int weight = get_weight(Solver, rounds, core_var_num);
 
-        //get result in States format
+        // get result in States format
         States solution(rounds);//states to show(a1,a2,...,bn-1)
         for (unsigned int i = 0; i < var_num; i++) {
             for (int j = 0; j < rounds; j++) {
@@ -621,27 +771,27 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
                 }
             }
         }
-        //solution + 1
+        // solution + 1
         auto iter = solution_counts.find(weight);
         if (iter != solution_counts.end()) {
             iter->second += 1;
         }
         else solution_counts[weight] = 1;
 
-        //a new state, shift to smallest
+        // a new state, shift to smallest
         vector<int> dx_dz = genSmallestState(solution[0]);
         for (int i = 0; i < rounds; i++) {
             solution[i] = ShiftXZ(dx_dz, solution[i]);
         }
 
-        //now extend result
-        //TODO
+        // now extend result
+        // TODO
 
-        //writing final result
+        // writing final result
         if (rounds != 1) write_result(pathname, weight, solution_counts[weight], solution);
-        if (rounds != 2 || counting % 1000 == 0) { cout << counting << ": ";cout << dx_dz[0] << "," << dx_dz[1] << " ";for (int i = 0; i < solution[0].size(); i++)cout << solution[0][i] << " ";cout << endl; }counting++;
+        if (rounds != 1 || counting % 1000 == 0) { cout << counting << ": ";cout << dx_dz[0] << "," << dx_dz[1] << " ";for (int i = 0; i < solution[0].size(); i++)cout << solution[0][i] << " ";cout << endl; }counting++;
 
-        //ban found solution and shifted solutions
+        // ban found solution and shifted solutions
         map<State, int> banned;//<state,offset>
         if (rounds > 1) {
             for (int i = 0; i < rounds - 1; i++) {
@@ -655,11 +805,16 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
     }
 }
 
-
+/**
+ * @brief read cnf file into a vector
+ * 
+ * @param res 
+ * @param pathname 
+ */
 void XoodooRound::read2Vector(vector<vector<int>>& res, const string pathname) {
     ifstream infile;
     infile.open(pathname.data());
-    assert(infile.is_open());//fail to open
+    assert(infile.is_open());// fail to open
     vector<int> suanz;
     string s;
 
@@ -678,6 +833,15 @@ void XoodooRound::read2Vector(vector<vector<int>>& res, const string pathname) {
     infile.close();
 }
 
+/**
+ * @brief read a solution from a readable solution file, read into States
+ * 
+ * @param res (States), output solution
+ * @param infile 
+ * @param mode 0 for XoodooSat, 1 for XooTools, 2 for single round
+ * @param st default is {"ab","NE","bb"}, the start signs of a State
+ * @return bool, whether found a solution in the input file
+ */
 bool XoodooRound::read2States(States& res, ifstream &infile, int mode, const vector<string> &st) {
     string s;
     string start = st[mode];
@@ -715,6 +879,15 @@ bool XoodooRound::read2States(States& res, ifstream &infile, int mode, const vec
     return false;
 }
 
+/**
+ * @brief read a solution from a readable solution file, read into StateColumns
+ * 
+ * @param res (StateColumns), output solution
+ * @param infile 
+ * @param mode 0 for XoodooSat, 1 for XooTools, 2 for single round
+ * @param st default is {"ab","NE","bb"}, the start signs of a State
+ * @return int, the weight of the solution
+ */
 int XoodooRound::read2StateColumn(StateColumns& res, ifstream &infile, int mode, const vector<string> &st) {
     string s;
     string start = st[mode];
@@ -751,7 +924,16 @@ int XoodooRound::read2StateColumn(StateColumns& res, ifstream &infile, int mode,
     return 0;
 }
 
-
+/**
+ * @brief read a solution from a readable solution file, read into vector<vector<Lit>>
+ * 
+ * @param assumptions vector<vector<Lit>>
+ * @param infile 
+ * @param mode default is 2 for single round
+ * @param offset var offset
+ * @param st default is {"ab","NE","bb"}, the start signs of a State
+ * @return bool, whether found a solution in the input file
+ */
 bool XoodooRound::read2assumptions(vector<vector<Lit>> &assumptions, ifstream &infile, int mode, int offset, const vector<string> &st) {
     string s;
     string start = st[mode];
@@ -784,7 +966,13 @@ bool XoodooRound::read2assumptions(vector<vector<Lit>> &assumptions, ifstream &i
     return assumptions.size() > 0;
 }
 
-
+/**
+ * @brief check if the solution is right
+ * 
+ * @param pathname 
+ * @param i check the ith trail
+ * @param mode 0 for XoodooSat, 1 for XooTools, 2 for single round
+ */
 void XoodooRound::check_trails(const string pathname, int i, int mode) {
     ifstream infile(pathname.data(), ios::in);
     assert(infile.is_open());
@@ -834,6 +1022,15 @@ void XoodooRound::check_trails(const string pathname, int i, int mode) {
     infile.close();
 }
 
+/**
+ * @brief compare 2 solution file, check if their solutions are the same
+ * 
+ * @param path_res1 file path 1
+ * @param mode1 mode of file 1, 0 for XoodooSat, 1 for XooTools, 2 for single round
+ * @param path_res2 file path 2
+ * @param mode2 mode of file 2, 0 for XoodooSat, 1 for XooTools, 2 for single round
+ * @return vector<vector<int>> 
+ */
 vector<vector<int>> XoodooRound::compare_trails(const string path_res1, int mode1, const string path_res2, int mode2) {
     ifstream in_res1(path_res1.data(), ios::in), in_res2(path_res2.data(), ios::in);
     States res1, res2;
@@ -880,6 +1077,15 @@ vector<vector<int>> XoodooRound::compare_trails(const string path_res1, int mode
     return output;
 }
 
+/**
+ * @brief get AS and AS bound CNF
+ * 
+ * @param Obj 
+ * @param Solver 
+ * @param weight 
+ * @param as_var_num 
+ * @param as_mode 
+ */
 void XoodooRound::gen_obj_T(vector<vector<int>> &Obj, SATSolver &Solver, int weight, int as_var_num, int as_mode) {
     string AS_cnf_num;//var list for pysat.card function, see pysat_card_AS.py for more information
     //gen_extend_AS_cnf_num(AS_cnf_num);
@@ -903,9 +1109,16 @@ void XoodooRound::gen_obj_T(vector<vector<int>> &Obj, SATSolver &Solver, int wei
     read2Vector(Obj, objFilePath + "CNF_" + AS_cnf_num + "AS" + mode[as_mode] + to_string(weight) + ".txt");
 }
 
-
+/**
+ * @brief add lambda relation to solver
+ * 
+ * @param Solver 
+ * @param rounds 
+ * @param base_offset 
+ */
 void XoodooRound::add_lambda2solver(SATSolver &Solver, int rounds, int base_offset) {
-    cout << "rhoE,inverse_rhoE,rhoW size: " << RhoE_Relation.size() << " " << inverse_RhoE_Relation.size() << " " << RhoW_Relation.size() << " " << Theta_Relation.size() << endl;
+    // lambda = RhoW(Theta(RhoE(·)))
+    cout << "rhoE, inverse_rhoE, rhoW size: " << RhoE_Relation.size() << " " << inverse_RhoE_Relation.size() << " " << RhoW_Relation.size() << " " << Theta_Relation.size() << endl;
     // linear layer
     // a1->b1, a2->b2, ...
     cout << "start add linear" << endl;
@@ -913,19 +1126,23 @@ void XoodooRound::add_lambda2solver(SATSolver &Solver, int rounds, int base_offs
         for (int i = 0; i < var_num; i++) {
             vector<unsigned int> temp = {};
 
+            // output bit position
             if(analysis_mode == 0) {
-                temp.push_back(RhoW_Relation[Theta_Relation[RhoE_Relation[i]][0]] + var_num + round_var_num * round + base_offset);  // output bit position
+                // find the output index of RhoW
+                temp.push_back(RhoW_Relation[Theta_Relation[RhoE_Relation[i]][0]] + var_num + round_var_num * round + base_offset);
             }
             else {
-                temp.push_back(inverse_RhoE_Relation[transpose_Theta_Relation[inverse_RhoW_Relation[i]][0]] + var_num + round_var_num * round + base_offset);  // output bit position
+                temp.push_back(inverse_RhoE_Relation[transpose_Theta_Relation[inverse_RhoW_Relation[i]][0]] + var_num + round_var_num * round + base_offset);
             }
 
+            // input bit position
             for (int j = 1; j < Y * 2 + 2; j++) {
                 if(analysis_mode == 0) {
-                    temp.push_back(inverse_RhoE_Relation[Theta_Relation[RhoE_Relation[i]][j]] + round_var_num * round + base_offset);  // input bit position
+                    // find the input index of Theta, then transform back to the input of RhoE
+                    temp.push_back(inverse_RhoE_Relation[Theta_Relation[RhoE_Relation[i]][j]] + round_var_num * round + base_offset);
                 }
                 else {
-                    temp.push_back(RhoW_Relation[transpose_Theta_Relation[inverse_RhoW_Relation[i]][j]] + round_var_num * round + base_offset);  // input bit position
+                    temp.push_back(RhoW_Relation[transpose_Theta_Relation[inverse_RhoW_Relation[i]][j]] + round_var_num * round + base_offset);
                 }
             }
             Solver.add_xor_clause(temp, false);
@@ -933,7 +1150,13 @@ void XoodooRound::add_lambda2solver(SATSolver &Solver, int rounds, int base_offs
     }
 }
 
-
+/**
+ * @brief add chi relation to solver
+ * 
+ * @param Solver 
+ * @param rounds 
+ * @param base_offset 
+ */
 void XoodooRound::add_chi2solver(SATSolver &Solver, int rounds, int base_offset) {
     /*
     chi
@@ -975,6 +1198,14 @@ void XoodooRound::add_chi2solver(SATSolver &Solver, int rounds, int base_offset)
     }
 }
 
+/**
+ * @brief add AS relation to solver
+ * 
+ * @param Solver 
+ * @param rounds 
+ * @param base_offset 
+ * @param core_var_num 
+ */
 void XoodooRound::add_AS2solver(SATSolver &Solver, int rounds, int base_offset, int core_var_num) {
     cout << "start add AS" << endl;
     //a1, a2, b2, ...
@@ -1018,6 +1249,13 @@ void XoodooRound::add_AS2solver(SATSolver &Solver, int rounds, int base_offset, 
     }
 }
 
+/**
+ * @brief add AS bound relation to solver
+ * 
+ * @param Solver 
+ * @param Obj 
+ * @param core_var_num 
+ */
 void XoodooRound::add_ASobj2solver(SATSolver &Solver, vector<vector<int>> &Obj, int core_var_num) {
     //AS_a1a2b2
     cout << "start add AS obj" << endl;
@@ -1098,16 +1336,16 @@ void XoodooRound::extendRound_AS() {
 }
 
 void XoodooRound::main() {
-    //print date and time
+    // print date and time
     time_point<system_clock> start = system_clock::now();
     auto st = system_clock::to_time_t(start);
     struct tm* stm = localtime(&st);
     cout << stm->tm_mon + 1 << " " << stm->tm_mday << " " << stm->tm_hour << ":" << stm->tm_min << ":" << stm->tm_sec << endl;
 
-    //round function, generate clauses for solver
+    // round function, generate clauses for solver
     XoodooRound_AS();
 
-    //mkdir result and the empty result file
+    // mkdir result and the empty result file
     ofstream out;
     string res_prefix = objFilePath + "result/";
     if (access(res_prefix.data(), F_OK) == -1) {//check if result dir is existed
@@ -1119,7 +1357,7 @@ void XoodooRound::main() {
     out.open(res_filepath, ios::ate);//clear result txt first
     out.close();
 
-    //ban previous solution and solve phase
+    // ban previous solution and solve phase
     cout << "start banning found trails with weight" + mode[AS_mode] << AS_weight_num << endl;
     string ban_pre_path = objFilePath + "found" + mode[AS_mode] + to_string(AS_weight_num) + ".txt";
     ifstream in_ban_pre(ban_pre_path.data(), ios::in);
@@ -1135,6 +1373,7 @@ void XoodooRound::main() {
 
     cout << "start solving" << endl;
     solve_and_output(solver, res_filepath, round_num, 0, var_num*core_state_num);
+
 }
 
 void XoodooRound::gen_chi_DDT(unordered_map<int, set<int>> &ddt) {

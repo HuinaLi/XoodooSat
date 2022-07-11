@@ -3,3 +3,6 @@ result/
 obj/
 CNF*.txt
 xoodoo
+*.log
+nohup.out
+.gitignore

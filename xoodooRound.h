@@ -17,7 +17,7 @@ typedef unsigned int tXoodooLane;
 typedef vector<tXoodooLane> tXoodooState;
 typedef vector<unsigned int> Bitmap;//for Bitmap A, A[i] = 0 or A[i] = 1
 typedef vector<unsigned int> StateColumn;//size: X*Z, StateColumn[i] is a Y-bit column
-typedef vector<unsigned int> State;//only contains the bit indexs that is set 1, i.e. {122,306}
+typedef vector<unsigned int> State;//only contains the bit indexs that is set 1, e.g. {122,306}
 typedef vector<State> States;
 typedef vector<StateColumn> StateColumns;
 
