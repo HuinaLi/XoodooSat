@@ -104,6 +104,21 @@ void XoodooRound::theta(tXoodooState &A) {
             A[indexXY(x, y)] ^= E[x];
 }
 
+void XoodooRound::transposetheta(tXoodooState &A) {
+    unsigned int x, y;
+    vector<tXoodooLane> P(X, 0), E(X, 0);
+
+    for (x = 0; x < X; x++) {
+        for (y = 0; y < Y; y++)
+            P[x] ^= A[indexXY(x, y)];
+    }
+    for (x = 0; x < X; x++)
+        E[x] = RORxoo(P[(x + X + theta_L1[0]) % X], theta_L1[1]) ^ RORxoo(P[(x + X + theta_L2[0]) % X], theta_L2[1]);
+    for (x = 0; x < X; x++)
+        for (y = 0; y < Y; y++)
+            A[indexXY(x, y)] ^= E[x];
+}
+
 void XoodooRound::inversetheta(tXoodooState &A) {
     unsigned int x, y;
     vector<tXoodooLane> P(X, 0);
@@ -194,6 +209,13 @@ tXoodooState XoodooRound::lambda(tXoodooState A) {
     rhoE(A);
     theta(A);
     rhoW(A);
+    return A;
+}
+
+tXoodooState XoodooRound::transposelambda(tXoodooState A) {
+    inverserhoW(A);
+    transposetheta(A);
+    inverserhoE(A);
     return A;
 }
 
@@ -999,7 +1021,8 @@ void XoodooRound::check_trails(const string pathname, int i, int mode) {
             res_xoo.push_back(tmp);
         }
         for (int m = 0; m < print_size - 1; m++) {
-            tXoodooState tmp = lambda(res_xoo[m]);
+            tXoodooState tmp = lambda(res_xoo[m]);//DC
+            /*tXoodooState tmp = transposelambda(res_xoo[m]);*/ //LC
             cout << "a" << m + 1 << ":" << endl;
             displayXooState(cout, res_xoo[m]);
             cout << endl;
