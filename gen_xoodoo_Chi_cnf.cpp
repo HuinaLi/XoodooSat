@@ -2,9 +2,9 @@
 
 void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     vector<string> aClause;
-    //14cnf to describe Chi
+    // 14cnf to describe Chi
     // A+B'+C'+E'+F'
-	//input 3bit, output 3bit, 6bit in all
+	// input 3bit, output 3bit, 6bit in all
     aClause.push_back("F");
     aClause.push_back("T");
     aClause.push_back("T");
@@ -15,7 +15,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
- //A'+B+C'+D'+F'
+    // A'+B+C'+D'+F'
     aClause.push_back("T");
     aClause.push_back("F");
     aClause.push_back("T");
@@ -26,7 +26,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A'+B'+C+D'+E'
+    // A'+B'+C+D'+E'
     aClause.push_back("T");
     aClause.push_back("T");
     aClause.push_back("F");
@@ -37,7 +37,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// B'+C'+D+E'+F'
+    // B'+C'+D+E'+F'
     aClause.push_back("0");
     aClause.push_back("T");
     aClause.push_back("T");
@@ -48,7 +48,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A'+C'+D'+E+F'
+    // A'+C'+D'+E+F'
     aClause.push_back("T");
     aClause.push_back("0");
     aClause.push_back("T");
@@ -59,7 +59,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A'+B'+D'+E'+F
+    // A'+B'+D'+E'+F
     aClause.push_back("T");
     aClause.push_back("T");
     aClause.push_back("0");
@@ -70,7 +70,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A+C+E+F'
+    // A+C+E+F'
     aClause.push_back("F");
     aClause.push_back("0");
     aClause.push_back("F");
@@ -81,7 +81,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// B+D+E'+F
+    // B+D+E'+F
     aClause.push_back("0");
     aClause.push_back("F");
     aClause.push_back("0");
@@ -92,7 +92,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A+B+D'+F
+    // A+B+D'+F
     aClause.push_back("F");
     aClause.push_back("F");
     aClause.push_back("0");
@@ -103,7 +103,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A'+C+D+E
+    // A'+C+D+E
     aClause.push_back("T");
     aClause.push_back("0");
     aClause.push_back("F");
@@ -114,7 +114,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A+B'+E+F
+    // A+B'+E+F
     aClause.push_back("F");
     aClause.push_back("T");
     aClause.push_back("0");
@@ -125,7 +125,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// C'+D+E+F
+    // C'+D+E+F
     aClause.push_back("0");
     aClause.push_back("0");
     aClause.push_back("T");
@@ -136,7 +136,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// B+C+D+F'
+    // B+C+D+F'
     aClause.push_back("0");
     aClause.push_back("F");
     aClause.push_back("F");
@@ -147,7 +147,7 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.clear();
 
 
-// A+B+C+F'
+    // A+B+C+F'
     aClause.push_back("F");
     aClause.push_back("F");
     aClause.push_back("F");
@@ -156,7 +156,6 @@ void gen_xoodoo_Chi_cnf(vector<vector<string>>& cnf_clauses) {
     aClause.push_back("T");
     cnf_clauses.push_back(aClause);
     aClause.clear();
-    
 }
 
 
@@ -168,7 +167,6 @@ void check_xoodoo_Chi_cnf() {
     
     vector<vector<string>> Chi_Relation;
     gen_xoodoo_Chi_cnf(Chi_Relation);
-    
     
     for (int i=0; i<1; i++) {
         
@@ -185,15 +183,10 @@ void check_xoodoo_Chi_cnf() {
                 }
             }
             solver.add_clause(clause);
- 
         }
-        
     }
-
-    
     
     int solution_count = 1;
-    
     while(true) {
         lbool ret = solver.solve();
         if (ret != l_True) {
@@ -217,16 +210,14 @@ void check_xoodoo_Chi_cnf() {
             solution_count++;
         }
         else {
-            //        return false;
+            // return false;
             cout<<"no"<<endl;
         }
-        //Banning found solution
+        // Banning found solution
         vector<Lit> ban_solution;
-        
         for (uint32_t var = 0; var < solver.nVars(); var++) {
             if (solver.get_model()[var] != l_Undef) {
-                ban_solution.push_back(
-                                       Lit(var, (solver.get_model()[var] == l_True)? true : false));
+                ban_solution.push_back(Lit(var, (solver.get_model()[var] == l_True)? true : false));
             }
         }
         solver.add_clause(ban_solution);
