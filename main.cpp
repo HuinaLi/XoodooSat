@@ -23,10 +23,11 @@ void show_usage(char* cmd) {
 }
 
 int main(int argc, char* argv[]) {
-    int analysis_mode = 0, round_num = 3, weight = 25, thread_num = 16, mode = 0;//default: 3 rounds, max weight 25, differential analysis
+    int analysis_mode = 0, round_num = 3, weight = 25, thread_num = 16, mode = 0;// default: 3 rounds, max weight 25, differential analysis
     int c;
     bool success = true;
 
+    // process command line parameters
     while(1) {
         int opt_index = 0;
         static struct option long_options[] =
@@ -83,22 +84,29 @@ int main(int argc, char* argv[]) {
         show_usage(argv[0]);
         cout<<"\nnow using default args"<<endl;
     }
+
     vector<string> analysis_print = {"differential trail analysis ", "linear trail analysis"};
     cout << analysis_print[analysis_mode] << endl;
     cout << round_num << " rounds, " << "weight " << weight << ", " << thread_num << " threads" << ", in mode " << mode << endl;
     XoodooRound xoo(analysis_mode, round_num, weight, thread_num, mode);
 
-    /* auto diff = xoo.compare_trails("./dc_3_23.txt",0,"./DC23.txt",1);
+    /*
+    // compare solution results of XoodooSat and XooTool
+    auto diff = xoo.compare_trails("./dc_3_23.txt",0,"./DC23.txt",1);
     for(int i=0; i<diff[0].size(); i++) {
         cout<<diff[0][i]<<" trail in dc_3_23"<<endl;
         xoo.check_trails("./dc_3_23.txt",diff[0][i],0);
     }
     */
-    //xoo.check_trails("./extra_trails.txt",1,0);
-    //xoo.check_trails("./test.txt",70,0);
+    // check if the trails in solution file is correct
+    // xoo.check_trails("./extra_trails.txt", 1, 0);
+    // xoo.check_trails("./test.txt", 70, 0);
+
+    // run the attack
     xoo.main();
-    //xoo.extend_main(true);
-    //xoo.extend_main(false);
+
+    // xoo.extend_main(true); // forward
+    // xoo.extend_main(false);// backward
 
     return 0;
 }

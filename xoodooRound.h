@@ -15,11 +15,11 @@ namespace XOODOOSAT {
 
 typedef unsigned int tXoodooLane;         // a lane is 32 bits
 typedef vector<tXoodooLane> tXoodooState; // a state = 3*4 lanes
-typedef vector<unsigned int> Bitmap;      // for Bitmap A, A[i] = 0 or A[i] = 1
+typedef vector<unsigned int> Bitmap;      // size: X*Y*Z, Bitmap A represents a state in binary array, A[i] = 0 or A[i] = 1
 typedef vector<unsigned int> StateColumn; // size: X*Z, StateColumn[i] is a Y-bit column
-typedef vector<unsigned int> State;       // only contains the bit indexs that is set 1, e.g. {122,306}
-typedef vector<State> States;             // a round contains states
-typedef vector<StateColumn> StateColumns; // a state contains columns
+typedef vector<unsigned int> State;       // represents a state; only contains the bits that are active in a state, e.g. {122,306}
+typedef vector<State> States;             // multi states
+typedef vector<StateColumn> StateColumns; // multi states stored in columns
 
 #define X 4
 #define Y 3

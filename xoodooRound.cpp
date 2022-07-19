@@ -21,11 +21,11 @@ using namespace XOODOOSAT;
  */
 XoodooRound::XoodooRound(int analy_mode, int rounds, int weight, int thread, int mode) {
     // set parameter
-    analysis_mode = analy_mode;
-    AS_weight_num = weight;
-    AS_state_num = rounds;
-    AS_mode = mode;
-    round_num = rounds;
+    analysis_mode = analy_mode;  // 0 for differential, 1 for linear
+    AS_weight_num = weight;      // weight bound
+    AS_state_num = rounds;       // how many rounds of AS need to be considered in weight calculation
+    AS_mode = mode;              // 0 for <=weight bound, 1 for =weight bound, 2 for >=weight bound
+    round_num = rounds;          // number of rounds
 
     // trail core a1,b1,a2,b2,...
     // number of states in the trail core
@@ -36,13 +36,13 @@ XoodooRound::XoodooRound(int analy_mode, int rounds, int weight, int thread, int
     AS_node_var_num = X * Z;
     // total number of bits in all states
     round_var_num = var_num * 2;
-    // 
+    // path to AS cnf file
     objFilePath = default_obj_file_path;
     thread_num = thread;
 
     theta_order = compute_Theta_Order();
 
-    solver.set_num_threads(thread_num);//threads to use
+    solver.set_num_threads(thread_num);// threads to use
     /*
     X=4,Y=3,Z=32
     for 3 round trail cores:
@@ -55,28 +55,33 @@ XoodooRound::XoodooRound(int analy_mode, int rounds, int weight, int thread, int
     AS_a2 (1664, 1791)
     AS_b2 (1792, 1919)
      */
-    solver.new_vars(var_num*core_state_num);//add vars
+    solver.new_vars(var_num*core_state_num);// add vars
 
-    rho_plane[0] = 1;//which plane to rho
+    rho_plane[0] = 1; // which plane to rho (plane 1 and 2)
     rho_plane[1] = 2;
-    theta_L1[0] = 1;//1st lshift in theta
+    theta_L1[0] = 1;  // 1st lshift in theta
     theta_L1[1] = 5;
-    theta_L2[0] = 1;//2nd lshift in theta
+    theta_L2[0] = 1;  // 2nd lshift in theta
     theta_L2[1] = 14;
-    rhoW_L1[0] = 1;//1st lshift in rhoW
+    rhoW_L1[0] = 1;   // 1st lshift in rhoW
     rhoW_L1[1] = 0;
-    rhoW_L2[0] = 0;//2nd lshift in rhoW
+    rhoW_L2[0] = 0;   // 2nd lshift in rhoW
     rhoW_L2[1] = 11;
-    rhoE_L1[0] = 0;//1st lshift in rhoE
+    rhoE_L1[0] = 0;   // 1st lshift in rhoE
     rhoE_L1[1] = 1;
-    rhoE_L2[0] = 2;//2nd lshift in rhoE
+    rhoE_L2[0] = 2;   // 2nd lshift in rhoE
     rhoE_L2[1] = 8;
 
+    // generate the input-output relation of transformations(rhoe, rhow, theta)
     gen_RhoE_T(RhoE_Relation, inverse_RhoE_Relation);
     gen_RhoW_T(RhoW_Relation, inverse_RhoW_Relation);
     gen_Theta_T(Theta_Relation, transpose_Theta_Relation);
+
+    // generate chi cnf
     gen_xoodoo_Chi_cnf(Chi_Relation);
+    // generate AS weight cnf
     gen_xoodoo_AS_cnf(AS_Relation);
+    // generate AS weight bound cnf
     gen_obj_T(obj, solver, AS_weight_num, AS_var_num, AS_mode);
 }
 
@@ -86,14 +91,23 @@ XoodooRound::XoodooRound(int analy_mode, int rounds, int weight, int thread, int
  * @return unsigned int, the order
  */
 unsigned int XoodooRound::compute_Theta_Order() {
+    // xoodoo X=4
     unsigned int oddPartSizeX = X;
+    // 2^i, begin with 2^0=1
     unsigned int powerTwoPartSizeX = 1;
+
+    // powerTwoPartSizeX=2^i, where i is the lowest 1 in X
+    // here X=4=0b100, so i=2, powerTwoPartSizeX = 4
+    // oddPartSizeX = X >> i = 1
     while ((oddPartSizeX & 1) == 0) {
         oddPartSizeX >>= 1;
         powerTwoPartSizeX <<= 1;
     }
+
+    // order = Z = 32
     unsigned int order = Z;
     if (powerTwoPartSizeX > order) order = powerTwoPartSizeX;
+    // since oddPartSizeX = 1, order = Z
     switch (oddPartSizeX) {
         case 1:
             break;
@@ -120,12 +134,15 @@ void XoodooRound::theta(tXoodooState &A) {
     unsigned int x, y;
     vector<tXoodooLane> P(X, 0), E(X, 0);
 
+    // compute the parity
     for (x = 0; x < X; x++) {
         for (y = 0; y < Y; y++)
             P[x] ^= A[indexXY(x, y)];
     }
+    // compute E = P<<(1,5) ^ P<<(1,14)
     for (x = 0; x < X; x++)
         E[x] = ROLxoo(P[(x + X - theta_L1[0]) % X], theta_L1[1]) ^ ROLxoo(P[(x + X - theta_L2[0]) % X], theta_L2[1]);
+    // finally output = input ^ E
     for (x = 0; x < X; x++)
         for (y = 0; y < Y; y++)
             A[indexXY(x, y)] ^= E[x];
@@ -140,12 +157,15 @@ void XoodooRound::transposetheta(tXoodooState &A) {
     unsigned int x, y;
     vector<tXoodooLane> P(X, 0), E(X, 0);
 
+    // compute the parity
     for (x = 0; x < X; x++) {
         for (y = 0; y < Y; y++)
             P[x] ^= A[indexXY(x, y)];
     }
+    // compute E = P>>(1,5) ^ P>>(1,14)
     for (x = 0; x < X; x++)
         E[x] = RORxoo(P[(x + X + theta_L1[0]) % X], theta_L1[1]) ^ RORxoo(P[(x + X + theta_L2[0]) % X], theta_L2[1]);
+    // finally output = input ^ E
     for (x = 0; x < X; x++)
         for (y = 0; y < Y; y++)
             A[indexXY(x, y)] ^= E[x];
@@ -162,11 +182,14 @@ void XoodooRound::inversetheta(tXoodooState &A) {
     unsigned int exponent = theta_order - 1;
     unsigned int powerTwo = 1;
 
+    // compute the parity
     for (x = 0; x < X; x++) {
         for (y = 0; y < Y; y++)
             P[x] ^= A[indexXY(x, y)];
     }
     vector<tXoodooLane> E(P);
+
+    // the loop will run theta_order times
     do {
         if ((exponent & powerTwo) != 0) {
             vector<tXoodooLane> tmp(E);
@@ -175,6 +198,8 @@ void XoodooRound::inversetheta(tXoodooState &A) {
         }
         powerTwo <<= 1;
     } while (powerTwo <= exponent);
+
+    // add the parity
     for (x = 0; x < X; x++)
         E[x] ^= P[x];
     for (x = 0; x < X; x++)
@@ -316,9 +341,11 @@ void XoodooRound::Bit2XooState(const Bitmap &A, tXoodooState &B) {
     B.assign(X*Y, 0);
     unsigned int x, y, z;
     for (y = 0; y < Y; y++) {
+        // set the lane to 0
         for (x = 0; x < X; x++) {
             B[X*y + x] = 0;
         }
+        // convert a tXoodooLane(32 bits) at a time
         for (z = 0; z < Z; z++) {
             for (x = 0; x < X; x++) {
                 B[X*y + x] |= ((tXoodooLane)(A[Z*X*y + Z * x + z]) << (z)); // 32*(4y+x) + z
@@ -336,6 +363,8 @@ void XoodooRound::Bit2XooState(const Bitmap &A, tXoodooState &B) {
 void XoodooRound::XooState2Bit(const tXoodooState &A, Bitmap &B) {
     B.assign(var_num, 0);
     unsigned int x, y, z;
+
+    // convert a bit at a time
     for (y = 0; y < Y; y++) {
         for (z = 0; z < Z; z++) {
             for (x = 0; x < X; x++) {
@@ -353,6 +382,7 @@ void XoodooRound::XooState2Bit(const tXoodooState &A, Bitmap &B) {
  */
 void XoodooRound::Bit2State(const Bitmap &A, State &B) {
     B.clear();
+    // only store the bits that are active
     for (unsigned int i = 0; i < var_num; i++) {
         if (A[i] == 1) B.push_back(i);
     }
@@ -366,6 +396,7 @@ void XoodooRound::Bit2State(const Bitmap &A, State &B) {
  */
 void XoodooRound::State2Bit(const State &A, Bitmap &B) {
     B.assign(var_num, 0);
+    // active bits set to 1, others are 0(by default)
     for (int i = 0; i < A.size(); i++) {
         B[A[i]] = 1;
     }
@@ -379,6 +410,7 @@ void XoodooRound::State2Bit(const State &A, Bitmap &B) {
  */
 void XoodooRound::Bit2StateColumn(const Bitmap &A, StateColumn &B) {
     B.assign(X*Z, 0);
+    // calculate each column
     for (int z = 0; z < Z; z++) {
         for (int x = 0; x < X; x++) {
             unsigned int col = 0;
@@ -401,6 +433,7 @@ void XoodooRound::StateColumn2Bit(const StateColumn &A, Bitmap &B) {
     for (int z = 0; z < Z; z++) {
         for (int x = 0; x < X; x++) {
             unsigned int col = A[Z*x + z];
+            // convert a column at a time
             for (int y = 0; y < Y; y++) {
                 B[Z*X*y + Z * x + z] = (col >> y) & 0x1;
             }
@@ -451,7 +484,7 @@ void XoodooRound::Plane2Bit(const vector<tXoodooLane> &A, Bitmap &B) {//32*x + z
  * @param B output tXoodooState&
  */
 void XoodooRound::State2XooState(const State &A, tXoodooState &B) {
-    Bitmap BitA;//Bit
+    Bitmap BitA;
     State2Bit(A, BitA);
     Bit2XooState(BitA, B);
 }
@@ -592,7 +625,7 @@ bool XoodooRound::StateEqualAfterShift(const State &A, const State &B) {//A, B i
     if (A.size() != B.size()) return false;
     if (A == B) return true;
 
-    // shift (x,z)
+    // shift all possible (x,z)
     for (int dx = 0; dx < X; dx++) {
         for (int dz = 0; dz < Z; dz++) {
             State shiftA = ShiftXZ({ dx,dz }, A);
@@ -605,44 +638,51 @@ bool XoodooRound::StateEqualAfterShift(const State &A, const State &B) {//A, B i
 /**
  * @brief check if State A < B
  *          value of A = \sum_{i=0}^{383} pow(2, i)*bits_of_A[i]
+ *          A, B are sorted
  * 
  * @param A const State &
  * @param B const State &
  * @return bool 
  */
-bool XoodooRound::isSmaller(const State &A, const State &B) {//state A<B; A, B is sorted
+bool XoodooRound::isSmaller(const State &A, const State &B) {
+    // start from the largest bit of A and B
     int i = A.size() - 1, j = B.size() - 1;
+
     while (i >= 0 && j >= 0) {
+        // if largest of A<B
         if (A[i] < B[j]) return true;
+        // if largest of A>B
         else if (A[i] > B[j]) return false;
+        // if largest of A=B, get the second largest...
         else {
             i--;
             j--;
         }
     }
+    // if all bits are equal, check if there A has more active bits than B
     return i < j;
 }
 
 /**
- * @brief by shifting (x,z), shift State A to its smallest symmetry State
+ * @brief by shifting (x,z), shift State A to its smallest symmetry State, A is sorted
  * 
  * @param A const State &
  * @return {int, int} dx_dz, the shift position corresponding to the smallest symmetry state
  */
-vector<int> XoodooRound::genSmallestState(const State &A) {//A is sorted  
+vector<int> XoodooRound::genSmallestState(const State &A) {
     vector<int> dx_dz = { 0, 0 };
     State smallest(A);
+    // shift all possible (x,z)
     for (int dx = 0; dx < X; dx++) {
         for (int dz = 0; dz < Z; dz++) {
             State shiftA = ShiftXZ({ dx,dz }, A);
-            //after shift (dx,dz), get the smaller state
+            // after shift (dx,dz), get the smaller state
             if (isSmaller(shiftA, smallest)) {
                 dx_dz = { dx,dz };
                 smallest = shiftA;
             }
         }
     }
-
     return dx_dz;
 }
 
@@ -653,15 +693,21 @@ vector<int> XoodooRound::genSmallestState(const State &A) {//A is sorted
  * @param A const State&
  */
 void XoodooRound::display(ostream& fout, const State &A) {
-    vector<unsigned int> tempA(X*Z, 0);//State column map, 0<=tempA[i]<=3
+    // State column map, 0<=tempA[i]<=7
+    vector<unsigned int> tempA(X*Z, 0);
+    // for each active bit in A, add to the correspond column
     for (int i = 0; i < A.size(); i++) {
+        // calculate the y index of the bit
         int y;
         y = A[i] / (X*Z);
         assert(y < Y);
+        // add to the correspond column
         tempA[A[i] - y * X*Z] |= ((0x1) << y);
     }
+    // print each column
     for (int x = 0; x < X; x++) {
         for (int z = 0; z < Z; z++) {
+            // replace 0 by .
             if (tempA[Z*x + z] == 0) fout << ".";
             else fout << tempA[Z*x + z];
         }
@@ -834,6 +880,7 @@ void XoodooRound::ban_solution(SATSolver &Solver, const map<State, int> &A) {
         zero = zero && (iter->first.size() == 0);
     }
 
+    // shift all possible (dx, dz)
     for (int dx = 0; dx < X; dx++) {
         for (int dz = 0; dz < Z; dz++) {
             vector<Lit> ban_solutions;
@@ -864,13 +911,16 @@ void XoodooRound::ban_solution(SATSolver &Solver, const map<State, int> &A) {
  */
 void XoodooRound::write_result(const string pathname, const int weight, const int solution_count, const States &solution) {
     ofstream out(pathname, ios::out | ios::app);
+    // write weight
     out << "weight " << weight << " solution " << solution_count << endl;
 
+    // write ai
     for (int i = 0; i < solution.size() - 1; i++) {
         out << "a" << i + 1 << ":" << endl;
         display(out, solution[i]);
         out << endl;
     }
+    // write b_{r-1}
     out << "b" << solution.size() - 1 << ":" << endl;
     display(out, solution[solution.size() - 1]);
     out << "\n" << endl;
@@ -921,6 +971,7 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
     
     while (true) {
         lbool ret;
+        // solve the cnf
         if (assumption.size() == 0) {
             ret = Solver.solve();
         }
@@ -934,11 +985,11 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
         struct tm* stm = localtime(&st);
         cout << '\n' << stm->tm_mon + 1 << " " << stm->tm_mday << " " << stm->tm_hour << ":" << stm->tm_min << ":" << stm->tm_sec << endl;
 
+        // if unsat, then all solutions found
         if (ret != l_True) {
             assert(ret == l_False);
             cout << "reach end" << endl;
             cout << "counting: " << counting << endl;
-            // All solutions found.
             exit(0);
         }
 
@@ -947,13 +998,17 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
         int weight = get_weight(Solver, rounds, core_var_num);
 
         // get result in States format
-        States solution(rounds);//states to show(a1,a2,...,bn-1)
+        // states to show(a1,a2,...,br-1)
+        States solution(rounds);
+        // each state has var_num variables
         for (unsigned int i = 0; i < var_num; i++) {
+            // result has rounds states(a1,a2,...,br-1)
             for (int j = 0; j < rounds; j++) {
                 int offset = j * round_var_num;
                 if (j == rounds - 1 && offset) offset -= var_num;
                 if (Solver.get_model()[i + offset + base_offset] == l_True) {
-                    solution[j].push_back(i);//State
+                    // only stored active bits(stored as State)
+                    solution[j].push_back(i);
                 }
             }
         }
@@ -977,7 +1032,7 @@ void XoodooRound::solve_and_output(SATSolver &Solver, const string pathname, int
         if (rounds != 1) write_result(pathname, weight, solution_counts[weight], solution);
         if (rounds != 1 || counting % 1000 == 0) { cout << counting << ": ";cout << dx_dz[0] << "," << dx_dz[1] << " ";for (int i = 0; i < solution[0].size(); i++)cout << solution[0][i] << " ";cout << endl; }counting++;
 
-        // ban found solution and shifted solutions
+        // ban found solution and ban shifted solutions
         map<State, int> banned;// <state,offset>
         if (rounds > 1) {
             for (int i = 0; i < rounds - 1; i++) {
