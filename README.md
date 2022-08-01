@@ -1,7 +1,7 @@
 
 # Xoodoo SAT solver
 
-**Using [CryptominiSAT](https://github.com/msoos/cryptominisat/) to find 3-round differential trails of [Xoodoo](https://keccak.team/xoodoo.html)**
+**Using [CryptominiSAT](https://github.com/msoos/cryptominisat/) to find 3/4-round differential trails of [Xoodoo](https://keccak.team/xoodoo.html)**
 
 ## Install
 
@@ -82,21 +82,13 @@ Finally, the result is output in result folder.
 ## Results
 Our experiment is equipped with Intel(R) Xeon(R) CPU E5-4650 v3 @ 2.10GHz, 12 cores for searching differential trails, Intel(R) Xeon(R) CPU E7-4830 v3 @ 2.10GHz,12 cores for searching linear trails.
 
-For weight <= 50(17.4G)
+For 3-round
 
-we took about two months to find 122 differential trails. However, if we synchronously running -w 25 and -w<=25(actually in here,  the real weight is 50), we only need one months due to the order of solutions is different under different parameter setting. For linear cryptanalysis we took about 50 days 21 hours 51 minutes to obtain 123 linear trails. 
+we find 122 3-round differential trails with weight up to 50; 123 3-round linear trails with weight up to 50. 
 
-For weight <= 48(14.3G)
 
-DC(67): 1 day 9 hours 51 minutes
-
-LC(67): 7 days 9 hours 17 minutes
-
-For weight <=46(4.7G)
-
-DC(34): 2 hours 52 minutes 
-
-LC(36): 1 days 8 hours 10 minutes
+For 4-round
+we find two 4-round differential trails with weight up to 80; two 4-round linear trails with weight up to 80.
 
 ```
 ./xoodoo -r 3 -w 25 -t 16 -m 0
