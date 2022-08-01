@@ -88,6 +88,7 @@ we find 122 3-round differential trails with weight up to 50; 123 3-round linear
 
 
 For 4-round
+
 we find two 4-round differential trails with weight up to 80; two 4-round linear trails with weight up to 80.
 
 ```
